@@ -7,6 +7,7 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+.next/
 
 # Environment files
 .env
@@ -16,6 +17,7 @@ build/
 # IDE and editor files
 .vscode/
 .idea/
+.trae/
 *.swp
 *.swo
 *~
@@ -49,3 +51,22 @@ coverage/
 .yarn/unplugged/
 .yarn/build-state.yml
 .pnp.*
+
+# Prisma generated client
+backend/src/generated/
+
+# Uploads (local dev)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Docker volumes
+data/
+
+# Large binaries
+chrome-linux64.zip
+
+# Screenshots
+analysis_screenshots/
+
+# Misc
+README.md

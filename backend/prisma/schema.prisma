@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  @@map("admin")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  products  Product[]
+
+  @@index([sort])
+  @@map("categories")
+}
+
+model News {
+  id          Int      @id @default(autoincrement())
+  title       String
+  summary     String?  @db.Text
+  content     String?  @db.Text
+  coverImage  String?  @db.Text
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished, createdAt])
+  @@map("news")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  categoryId  Int
+  description String?  @db.Text
+  detail      String?  @db.Text
+  images      Json?
+  sort        Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([isPublished, sort])
+  @@map("products")
+}
+
+model Certificate {
+  id          Int      @id @default(autoincrement())
+  title       String
+  imageUrl    String   @db.Text
+  sort        Int      @default(0)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished, sort])
+  @@map("certificates")
+}
+
+model Banner {
+  id        Int      @id @default(autoincrement())
+  title     String?
+  imageUrl  String   @db.Text
+  linkUrl   String?  @db.Text
+  sort      Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sort])
+  @@map("banners")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  isRead    Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@map("messages")
+}
+
+model SiteSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
