@@ -1,16 +1,23 @@
 # ---- Build Stage ----
 FROM node:22-alpine AS builder
 
+RUN npm config set registry https://registry.npmmirror.com
+
 WORKDIR /app
 
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY . .
 RUN npm run build
 
 # ---- Run Stage ----
 FROM node:22-alpine AS runner
+
+RUN apk add --no-cache wget
 
 WORKDIR /app
 
