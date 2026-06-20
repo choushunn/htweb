@@ -67,3 +67,7 @@ chrome-linux64.zip
 
 # Screenshots
 analysis_screenshots/
+
+# Generated deployment packages
+*.tar.gz
+*.zip
