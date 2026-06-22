@@ -52,7 +52,7 @@ const values = [
 const stats = [
   { value: "15年", label: "行业深耕" },
   { value: "500+", label: "合作企业" },
-  { value: "30+", label: "出口国家" },
+  { value: "10+", label: "出口国家" },
 ];
 
 export default function CulturePage() {
@@ -114,15 +114,22 @@ export default function CulturePage() {
         </div>
 
         {/* 数据统计 */}
-        <div className="mt-24 bg-gradient-to-r from-[#0070d5] to-[#0090f5] rounded-2xl py-12 px-8 text-center">
-          <div className="grid grid-cols-3 gap-8">
-            {stats.map((s) => (
-              <div key={s.label} className="text-white">
-                <div className="text-4xl md:text-5xl font-bold mb-2">{s.value}</div>
-                <div className="w-8 h-0.5 bg-white/40 mx-auto mb-2 rounded-full" />
-                <div className="text-white/80 text-lg">{s.label}</div>
-              </div>
-            ))}
+        <div className="mt-24 relative overflow-hidden bg-gradient-to-br from-[#0070d5] via-[#0060bd] to-[#004a94] rounded-2xl py-16 md:py-20 px-8 md:px-12 text-center">
+          <div className="absolute -top-24 -right-24 w-64 h-64 border-[20px] border-white/[0.04] rounded-full" />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 border-[15px] border-white/[0.04] rounded-full" />
+          <div className="absolute top-1/2 left-8 w-px h-24 bg-white/[0.06] -translate-y-1/2 rotate-45 hidden md:block" />
+          <div className="absolute top-1/2 right-8 w-px h-24 bg-white/[0.06] -translate-y-1/2 -rotate-45 hidden md:block" />
+          <div className="absolute inset-x-[15%] top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <div className="relative z-[1]">
+            <div className="grid grid-cols-3 gap-8">
+              {stats.map((s) => (
+                <div key={s.label} className="text-white">
+                  <div className="text-4xl md:text-5xl font-bold mb-2">{s.value}</div>
+                  <div className="w-8 h-0.5 bg-white/40 mx-auto mb-2 rounded-full" />
+                  <div className="text-white/80 text-lg">{s.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

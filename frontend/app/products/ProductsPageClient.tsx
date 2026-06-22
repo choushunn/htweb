@@ -72,12 +72,22 @@ export default function ProductsPageClient({
   return (
     <>
       <div
-        className="w-full h-[260px] md:h-[320px] bg-cover bg-center"
+        className="w-full h-[260px] md:h-[320px] bg-cover bg-center relative"
         style={{
           backgroundImage:
             "url(https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Industrial%20product%20showcase%20warehouse%2C%20steel%20coils%20and%20metal%20materials%20stacked%2C%20modern%20factory%20interior%2C%20professional%20lighting&image_size=landscape_16_9)",
         }}
-      />
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0070d5]/80 to-black/40" />
+        <div className="absolute bottom-10 left-0 right-0 text-center">
+          <h1 className="text-white text-[36px] md:text-[48px] font-bold tracking-wider">
+            产品中心
+          </h1>
+          <p className="text-white/80 text-base md:text-lg mt-2">
+            高品质催化材料，服务全球客户
+          </p>
+        </div>
+      </div>
       <div className="max-w-6xl mx-auto py-12 px-4">
         <div className="mb-8">
           <Breadcrumb

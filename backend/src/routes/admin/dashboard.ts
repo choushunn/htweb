@@ -70,32 +70,48 @@ router.get("/", async (_req, res) => {
       .filter((c) => c.count > 0)
       .sort((a, b) => b.count - a.count);
 
-    // 3. 最近7天留言趋势
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    // 3. 最近4周留言趋势（按周统计）
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 27);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
 
     const recentMessages = await prisma.message.findMany({
-      where: { createdAt: { gte: sevenDaysAgo } },
+      where: { createdAt: { gte: thirtyDaysAgo } },
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     });
 
-    const dayMap: Record<string, { date: string; count: number }> = {};
-    for (let i = 0; i < 7; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      dayMap[key] = { date: key, count: 0 };
+    // 获取日期所在周的周一
+    function getMonday(date: Date): Date {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      d.setDate(diff);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    // 构建最近4周的周映射
+    const weekMap: Record<string, { week: string; count: number }> = {};
+    const now = new Date();
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - (3 - i) * 7);
+      const monday = getMonday(d);
+      const key = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+      weekMap[key] = {
+        week: `${String(monday.getMonth() + 1).padStart(2, "0")}/${String(monday.getDate()).padStart(2, "0")}`,
+        count: 0,
+      };
     }
 
     recentMessages.forEach((item) => {
-      const d = item.createdAt;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      if (dayMap[key]) dayMap[key].count++;
+      const monday = getMonday(item.createdAt);
+      const key = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+      if (weekMap[key]) weekMap[key].count++;
     });
 
-    const messageTrend = Object.values(dayMap);
+    const messageTrend = Object.values(weekMap);
 
     success(res, {
       monthlyContent,

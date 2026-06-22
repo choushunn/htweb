@@ -321,3 +321,15 @@ a:not(.ant-btn):not(.ant-menu-item):not(.ant-menu-submenu-title):not(.ant-dropdo
   background-size: 200% 100%;
   animation: rainbow-flow 3s linear infinite;
 }
+
+/* ===== Admin dashboard message slide-in ===== */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

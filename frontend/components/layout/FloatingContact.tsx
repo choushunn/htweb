@@ -37,7 +37,7 @@ function ContactItem({ icon, label, expandedContent }: ContactItemProps) {
 
 export default function FloatingContact() {
   const pathname = usePathname();
-  const { wechatQr } = useSettings();
+  const { wechatQr, contact_phone } = useSettings();
   const [showTop, setShowTop] = useState(false);
 
   useEffect(() => {
@@ -82,8 +82,8 @@ export default function FloatingContact() {
             expandedContent={
               <div className="flex items-center gap-[10px]">
                 <PhoneFilled className="text-[#0070d5] text-[18px]" aria-hidden="true" />
-                <a href="tel:13210894158" suppressHydrationWarning className="text-[#1a1a1a] text-[16px] md:text-[18px] font-bold tracking-[1px] no-underline">
-                  132-1089-4158
+                <a href={`tel:${contact_phone}`} suppressHydrationWarning className="text-[#1a1a1a] text-[16px] md:text-[18px] font-bold tracking-[1px] no-underline">
+                  {contact_phone?.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3") || contact_phone}
                 </a>
               </div>
             }
@@ -135,7 +135,7 @@ export default function FloatingContact() {
       {/* 移动端：底部固定栏 */}
       <div className="fixed bottom-0 left-0 right-0 z-[999] flex lg:hidden bg-white border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]" role="complementary" aria-label="快捷联系方式">
         <a
-          href="tel:13210894158"
+          href={`tel:${contact_phone}`}
           suppressHydrationWarning
           className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#0070d5] no-underline active:bg-blue-50 transition-colors"
         >

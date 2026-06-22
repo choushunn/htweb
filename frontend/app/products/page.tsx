@@ -4,7 +4,7 @@ import ProductsPageClient from "./ProductsPageClient";
 
 export const metadata: Metadata = {
   title: "产品中心",
-  description: "山东昊天金属科技有限公司产品展示 — 加氢催化剂、雷尼镍催化剂、镍铝合金粉、贵金属催化剂",
+  description: "山东昊天金属科技有限公司产品展示 — 加氢催化剂、铝镍合金氢化催化剂、镍铝合金粉、贵金属催化剂",
 };
 
 interface Category {

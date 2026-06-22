@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { COMPANY } from "@/lib/company";
 import { Carousel, Card, Row, Col, Image } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import {
@@ -8,10 +9,8 @@ import {
   GoldFilled,
   ToolFilled,
   GlobalOutlined,
-  BuildFilled,
-  CarFilled,
   ExperimentFilled,
-  ShakeOutlined,
+  ShopFilled,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
@@ -40,7 +39,7 @@ interface NewsItem {
 const STATS = [
   { value: "1000万", label: "注册资本", color: "#0070d5", bg: "#e8f4fd" },
   { value: "50+", label: "产品品类", color: "#0070d5", bg: "#e8f4fd" },
-  { value: "30+", label: "出口国家", color: "#0070d5", bg: "#e8f4fd" },
+  { value: "10+", label: "出口国家", color: "#0070d5", bg: "#e8f4fd" },
   { value: "5000万+", label: "年出口额", color: "#0070d5", bg: "#e8f4fd" },
 ];
 
@@ -58,20 +57,20 @@ const ADVANTAGES = [
   {
     icon: <ToolFilled aria-hidden="true" style={{ fontSize: 48, color: "#0070d5" }} />,
     title: "定制加工",
-    desc: "支持尺寸定制、表面处理、分条切割等深加工服务，满足客户个性化需求。",
+    desc: "根据客户需要、并结合不同设备生产工艺的实际情况定制不同的产品，满足客户个性化需求。",
   },
   {
     icon: <GlobalOutlined aria-hidden="true" style={{ fontSize: 48, color: "#0070d5" }} />,
     title: "全球物流",
-    desc: "完善的仓储物流体系，国内次日可达，国际业务覆盖东南亚、中东、欧美等30+国家。",
+    desc: "国内最快3日到达，国际业务覆盖东南亚、欧美等10+国家。",
   },
 ];
 
 const INDUSTRIES = [
-  { icon: <BuildFilled aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "建筑工程" },
-  { icon: <CarFilled aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "汽车制造" },
-  { icon: <ExperimentFilled aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "化工设备" },
-  { icon: <ShakeOutlined aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "机械加工" },
+  { icon: <ExperimentFilled aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "化工生产" },
+  { icon: <GoldFilled aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "金属制品" },
+  { icon: <ToolFilled aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "新材料技术研发" },
+  { icon: <ShopFilled aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "食品添加剂销售" },
   { icon: <GlobalOutlined aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "国际贸易" },
   { icon: <SafetyCertificateFilled aria-hidden="true" style={{ fontSize: 40, color: "#0070d5" }} />, name: "能源电力" },
 ];
@@ -116,7 +115,7 @@ export default function HomePageClient({
   return (
     <div>
       {/* ====== Banner 轮播 ====== */}
-      {banners.length > 0 && (
+      {banners.length > 0 ? (
         <div className="relative group">
           <Carousel ref={carouselRef} autoplay autoplaySpeed={5000} effect="fade">
             {banners.map((banner) => (
@@ -191,6 +190,39 @@ export default function HomePageClient({
             <RightOutlined />
           </button>
         </div>
+      ) : (
+        <div className="h-[500px] md:h-[650px] bg-gradient-to-r from-[#0a1628] to-[#1a2a4a] flex items-center justify-center relative">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "linear-gradient(to right, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)",
+            }}
+          />
+          <div className="relative z-[1] text-center">
+            <h1 className="text-white text-[36px] md:text-[56px] font-bold tracking-[3px] md:tracking-[6px]">
+              山东昊天金属科技有限公司
+            </h1>
+            <p className="text-white/60 text-base md:text-lg mt-4 tracking-wider">
+              专注催化材料，以品质致敬信任
+            </p>
+            <div className="mt-8 flex items-center justify-center gap-4">
+              <AnimatedBorder className="inline-block">
+                <Link href="/contact" className="no-underline">
+                  <span className="block py-3.5 px-9 bg-white text-[#0070d5] font-semibold text-base whitespace-nowrap">
+                    立即咨询 →
+                  </span>
+                </Link>
+              </AnimatedBorder>
+              <AnimatedBorder reverse className="inline-block">
+                <Link href="/products" className="no-underline">
+                  <span className="block py-3.5 px-9 bg-[#0a1628] text-white font-semibold text-base whitespace-nowrap">
+                    查看产品 →
+                  </span>
+                </Link>
+              </AnimatedBorder>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ====== 关于我们 ====== */}
@@ -203,9 +235,9 @@ export default function HomePageClient({
             </h2>
             <p className="text-[18px] md:text-[22px] leading-[2] text-[#1a1a1a] max-w-[800px] mx-auto">
               山东昊天金属科技有限公司是一家集催化材料研发、生产、销售与进出口贸易于一体的综合性企业。
-              公司成立于 2022 年，注册资本 1000 万元，总部位于山东省青岛市，
-              业务覆盖加氢催化剂、雷尼镍催化剂、镍铝合金粉、贵金属催化剂等多个领域，
-              产品远销东南亚、中东、欧美等国际市场。
+              公司成立于 2022 年，注册资本 1000 万元，总部位于{COMPANY.addressCity}，
+              业务覆盖加氢催化剂、铝镍合金氢化催化剂、镍铝合金粉、贵金属催化剂等多个领域，
+              产品远销东南亚、欧美等国际市场。
             </p>
 
             <Row gutter={[32, 32]} className="!mt-16">
@@ -303,12 +335,12 @@ export default function HomePageClient({
                         styles={{ body: { padding: 24 } }}
                         cover={
                           product.images?.[0] ? (
-                            <div className="overflow-hidden">
+                            <div className="overflow-hidden [&_.ant-image]:!block [&_.ant-image]:!w-full">
                               <Image
                                 src={product.images[0]}
                                 alt={product.name}
                                 height={260}
-                                className="object-cover w-full transition-transform duration-[400ms] ease-out hover:scale-105 will-change-transform"
+                                className="object-cover w-full transition-transform duration-[400ms] ease-out hover:scale-110 will-change-transform"
                                 preview={false}
                                 loading="lazy"
                                 fallback="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='260'%3E%3Crect fill='%23f5f5f5' width='400' height='260'/%3E%3Ctext x='200' y='130' text-anchor='middle' fill='%23999' font-size='16' dy='.3em'%3E暂无图片%3C/text%3E%3C/svg%3E"

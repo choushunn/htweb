@@ -18,6 +18,7 @@ import {
 } from "@ant-design/icons";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import api from "@/lib/api";
 
 const { Header, Sider, Content } = Layout;
 
@@ -46,7 +47,10 @@ export default function AdminLayout({
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [passwordForm] = Form.useForm();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [passwordChangedModalOpen, setPasswordChangedModalOpen] = useState(false);
   const [year, setYear] = useState(2026);
+  const [copyrightText, setCopyrightText] = useState("");
+  const [icpNumber, setIcpNumber] = useState("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { message } = App.useApp();
@@ -61,6 +65,15 @@ export default function AdminLayout({
       const token = localStorage.getItem("token");
       if (!token) {
         router.replace("/admin/login");
+      } else {
+        // 获取站点设置（版权信息、备案号）
+        api.get("/api/admin/settings").then((res) => {
+          const data = res.data?.data || res.data;
+          if (data) {
+            if (data.copyright_text) setCopyrightText(data.copyright_text);
+            if (data.icp_number) setIcpNumber(data.icp_number);
+          }
+        }).catch(() => {});
       }
     }
   }, [pathname, router]);
@@ -104,26 +117,30 @@ export default function AdminLayout({
         return;
       }
       setPasswordSubmitting(true);
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/auth/password", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ oldPassword: values.oldPassword, newPassword: values.newPassword }),
+      await api.put("/api/auth/password", {
+        oldPassword: values.oldPassword,
+        newPassword: values.newPassword,
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "修改密码失败");
-      }
-      message.success("密码修改成功");
       setPasswordModalOpen(false);
       passwordForm.resetFields();
+      setPasswordChangedModalOpen(true);
     } catch (error: any) {
-      message.error(error.message || "修改密码失败");
+      if (error.response?.data?.error) {
+        message.error(error.response.data.error);
+      } else {
+        message.error(error.message || "修改密码失败");
+      }
     } finally {
       setPasswordSubmitting(false);
     }
   };
 
+  const handleReLogin = () => {
+    setPasswordChangedModalOpen(false);
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    router.push("/admin/login");
+  };
 
 
   return (
@@ -239,16 +256,16 @@ export default function AdminLayout({
         </Content>
 
         {/* 底部版权 - 贴底 */}
-        <div className="h-14 flex items-center justify-center bg-white border-t border-gray-100 text-gray-400 text-base shrink-0">
-          <span>&copy; {year} 山东昊天金属科技有限公司</span>
+        <div className="h-14 flex items-center justify-center bg-white border-t border-gray-100 text-gray-700 text-base shrink-0">
+          <span>{copyrightText || "山东昊天金属科技有限公司"}</span>
           <span className="mx-2">|</span>
           <a
             href="https://beian.miit.gov.cn/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-400 hover:text-gray-600 transition-colors no-underline"
+            className="text-gray-700 hover:text-gray-900 transition-colors no-underline"
           >
-            鲁ICP备202XXXXXXXX号-1
+            {icpNumber || "鲁ICP备202XXXXXXXX号-1"}
           </a>
         </div>
       </Layout>
@@ -320,6 +337,23 @@ export default function AdminLayout({
         <div className="py-4 flex items-center gap-3">
           <span className="text-2xl">&#9888;&#65039;</span>
           <span className="text-gray-600">确定要退出系统吗？</span>
+        </div>
+      </Modal>
+
+      {/* 密码修改成功提示弹窗 */}
+      <Modal
+        title="密码已修改"
+        open={passwordChangedModalOpen}
+        onOk={handleReLogin}
+        okText="重新登录"
+        closable={false}
+        width={380}
+        centered
+        okButtonProps={{ className: "bg-[#0070d5] hover:bg-[#005bb5] border-none shadow-sm" }}
+      >
+        <div className="py-4 flex items-center gap-3">
+          <span className="text-2xl">&#10004;&#65039;</span>
+          <span className="text-gray-600">密码修改成功，请重新登录</span>
         </div>
       </Modal>
     </Layout>

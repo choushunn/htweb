@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Form,
   Input,
@@ -19,6 +19,7 @@ import {
   MailOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
+import { useSettings } from "@/contexts/SettingsContext";
 import api from "@/lib/api";
 
 const { Title, Text, Paragraph } = Typography;
@@ -32,17 +33,10 @@ interface ContactFormValues {
 }
 
 export default function ContactPage() {
+  const { contact_phone, contact_email, contact_address, wechatQr } = useSettings();
   const [form] = Form.useForm<ContactFormValues>();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [wechatQr, setWechatQr] = useState("");
-
-  useEffect(() => {
-    api.get("/api/settings").then((res) => {
-      const data = res.data?.data || res.data || {};
-      if (data.wechat_qr) setWechatQr(data.wechat_qr);
-    }).catch(() => {});
-  }, []);
 
   const handleSubmit = async (values: ContactFormValues) => {
     setSubmitting(true);
@@ -61,12 +55,22 @@ export default function ContactPage() {
   return (
     <>
       <div
-        className="w-full h-[260px] md:h-[320px] bg-cover bg-center"
+        className="w-full h-[260px] md:h-[320px] bg-cover bg-center relative"
         style={{
           backgroundImage:
             "url(https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Modern%20office%20reception%20desk%2C%20corporate%20lobby%20with%20warm%20lighting%2C%20professional%20business%20environment%2C%20clean%20and%20welcoming&image_size=landscape_16_9)",
         }}
-      />
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0070d5]/80 to-black/40" />
+        <div className="absolute bottom-10 left-0 right-0 text-center">
+          <h1 className="text-white text-[36px] md:text-[48px] font-bold tracking-wider">
+            联系我们
+          </h1>
+          <p className="text-white/80 text-base md:text-lg mt-2">
+            期待与您的合作
+          </p>
+        </div>
+      </div>
       <div className="max-w-6xl mx-auto py-12 px-4">
         <div className="mb-8">
           <Breadcrumb
@@ -88,8 +92,7 @@ export default function ContactPage() {
                   <EnvironmentOutlined aria-hidden="true" className="text-xl text-blue-600 mt-1" />
                   <div>
                     <Text strong className="block mb-1">公司地址</Text>
-                    <Text type="secondary">山东省青岛市莱西市南墅镇水晶路17号</Text>
-                    <div className="text-gray-400 text-xs mt-1">邮编：266600</div>
+                    <span className="text-[#555] hover:underline cursor-pointer transition-colors">{contact_address}</span>
                   </div>
                 </div>
 
@@ -97,7 +100,7 @@ export default function ContactPage() {
                   <PhoneOutlined aria-hidden="true" className="text-xl text-blue-600 mt-1" />
                   <div>
                     <Text strong className="block mb-1">联系电话</Text>
-                    <Text type="secondary">132-1089-4158</Text>
+                    <a href={`tel:${contact_phone}`} suppressHydrationWarning className="text-[#555] hover:text-[#0070d5] hover:underline transition-colors">{contact_phone?.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3") || contact_phone}</a>
                   </div>
                 </div>
 
@@ -105,7 +108,7 @@ export default function ContactPage() {
                   <MailOutlined aria-hidden="true" className="text-xl text-blue-600 mt-1" />
                   <div>
                     <Text strong className="block mb-1">电子邮箱</Text>
-                    <Text type="secondary">1227134924@qq.com</Text>
+                    <a href={`mailto:${contact_email}`} className="text-[#555] hover:text-[#0070d5] hover:underline transition-colors">{contact_email}</a>
                   </div>
                 </div>
               </div>
@@ -200,7 +203,14 @@ export default function ContactPage() {
                   <TextArea rows={5} placeholder="请输入您的留言内容..." autoComplete="off" />
                 </Form.Item>
 
-                <Form.Item>
+                <Form.Item className="!text-right">
+                  <Button
+                    className="mr-3"
+                    size="large"
+                    onClick={() => form.resetFields()}
+                  >
+                    清空信息
+                  </Button>
                   <Button
                     type="primary"
                     htmlType="submit"

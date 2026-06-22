@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, Button, Modal, Form, Input, InputNumber, Space, message, Popconfirm, Card, Breadcrumb } from "antd";
+import { Table, Button, Modal, Form, Input, InputNumber, Space, App, Popconfirm, Card, Breadcrumb } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ interface Category {
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
+  const { message } = App.useApp();
   const [data, setData] = useState<Category[]>([]);
   const [filteredData, setFilteredData] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,7 +96,7 @@ export default function AdminCategoriesPage() {
 
   const columns = [
     { title: "ID", dataIndex: "id", key: "id", sorter: (a: any, b: any) => a.id - b.id },
-    { title: "名称", dataIndex: "name", key: "name", width: 220, sorter: (a: any, b: any) => (a.name || '').localeCompare(b.name || '') },
+    { title: "名称", dataIndex: "name", key: "name", ellipsis: true, sorter: (a: any, b: any) => (a.name || '').localeCompare(b.name || '') },
     { title: "排序", dataIndex: "sort", key: "sort", sorter: (a: any, b: any) => a.sort - b.sort },
     {
       title: "操作",
@@ -168,10 +169,12 @@ export default function AdminCategoriesPage() {
         title={editingItem ? "编辑分类" : "新增分类"}
         open={modalOpen}
         onOk={handleSubmit}
-        onCancel={() => setModalOpen(false)}
+        onCancel={() => {
+          setModalOpen(false);
+          form.resetFields();
+        }}
         confirmLoading={submitting}
         centered
-        destroyOnHidden
         okText="确定"
         cancelText="取消"
         okButtonProps={{ className: "bg-[#0070d5] hover:bg-[#005bb5] border-none shadow-sm" }}

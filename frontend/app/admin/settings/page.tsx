@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, Form, Input, Button, message, Breadcrumb, Spin } from "antd";
-import { SaveOutlined } from "@ant-design/icons";
+import { Card, Form, Input, Button, Upload, Image, App, Breadcrumb, Spin } from "antd";
+import { SaveOutlined, UploadOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
@@ -26,9 +26,11 @@ const defaultSettings: Settings = {
 
 export default function AdminSettingsPage() {
   const router = useRouter();
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const wechatQrValue = Form.useWatch("wechat_qr", form);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -109,9 +111,64 @@ export default function AdminSettingsPage() {
             </Form.Item>
 
             <h3 className="text-base font-semibold text-gray-700 mb-4 mt-6 pb-3 border-b border-gray-100">微信二维码</h3>
-            <Form.Item name="wechat_qr" label="二维码图片地址">
-              <Input placeholder="请输入微信二维码图片URL" />
+            <div className="mb-2">
+              <Upload
+                name="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                action="/api/admin/upload"
+                maxCount={1}
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  const isImage = ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type);
+                  if (!isImage) {
+                    message.error("仅支持 jpg, png, webp, gif 格式的图片");
+                    return Upload.LIST_IGNORE;
+                  }
+                  const isLt5M = file.size / 1024 / 1024 < 5;
+                  if (!isLt5M) {
+                    message.error("图片大小不能超过 5MB");
+                    return Upload.LIST_IGNORE;
+                  }
+                  return true;
+                }}
+                onChange={(info) => {
+                  if (info.file.status === "uploading") return;
+                  if (info.file.status === "done") {
+                    const url = info.file.response?.data?.url;
+                    if (url) {
+                      form.setFieldValue("wechat_qr", url);
+                      message.success("上传成功");
+                    }
+                  } else if (info.file.status === "error") {
+                    message.error(info.file.response?.message || "上传失败");
+                  }
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <Button icon={<UploadOutlined />}>上传图片</Button>
+                  <span className="text-gray-400 text-sm">支持 jpg/png/webp/gif，最大 5MB</span>
+                </div>
+              </Upload>
+            </div>
+            <Form.Item name="wechat_qr" noStyle>
+              <Input type="hidden" />
             </Form.Item>
+            <div className="mb-6 mt-2">
+              <div className="flex items-start gap-4">
+                {wechatQrValue ? (
+                  <Image
+                    width={120}
+                    src={wechatQrValue}
+                    alt="微信二维码预览"
+                    fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQIHWNgAAIABQABNjN9GQAAAAlwSFlzAAAWJQAAFiUB4wK6GQAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuMTM0A1t6AAAAG0lEQVQY02P8//8/AwMDAwMDAwMDw38GBgYGAKNIDv3zQCuNAAAAAElFTkSuQmCC"
+                  />
+                ) : (
+                  <div className="w-[120px] h-[120px] border-2 border-dashed border-gray-200 rounded flex items-center justify-center text-gray-400 text-sm">
+                    暂无图片
+                  </div>
+                )}
+              </div>
+            </div>
           </Form>
         </Card>
       </Spin>

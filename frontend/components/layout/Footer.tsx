@@ -10,6 +10,7 @@ import {
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSettings } from "@/contexts/SettingsContext";
+import { COMPANY } from "@/lib/company";
 
 const { Footer: AntFooter } = Layout;
 
@@ -22,7 +23,7 @@ interface Category {
 
 export default function Footer() {
   const pathname = usePathname();
-  const { wechatQr } = useSettings();
+  const { wechatQr, contact_phone, contact_email, contact_address, icp_number, copyright_text } = useSettings();
   const [categories, setCategories] = useState<Category[]>([]);
   const [year, setYear] = useState("");
 
@@ -62,16 +63,16 @@ export default function Footer() {
               <div className="flex gap-2.5 text-white/85">
                 <EnvironmentFilled aria-hidden="true" className="mt-1 text-base" />
                 <span className="text-[14px] md:text-[15px] leading-[1.6]">
-                  山东省青岛市莱西市南墅镇水晶路17号
+                  {contact_address || COMPANY.address}
                 </span>
               </div>
-              <a href="tel:13210894158" suppressHydrationWarning className="flex gap-2.5 items-center no-underline text-white/85 hover:text-white/95 transition-colors">
+              <a href={`tel:${contact_phone}`} suppressHydrationWarning className="flex gap-2.5 items-center no-underline text-white/85 hover:text-white/95 transition-colors">
                 <PhoneFilled aria-hidden="true" className="text-base" />
-                <span className="text-[14px] md:text-[15px]">132-1089-4158</span>
+                <span className="text-[14px] md:text-[15px]">{contact_phone?.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3") || contact_phone}</span>
               </a>
               <div className="flex gap-2.5 items-center">
                 <MailFilled aria-hidden="true" className="text-base" />
-                <a href="mailto:1227134924@qq.com" className="text-white/85 text-[14px] md:text-[15px] no-underline hover:text-white/95 transition-colors">1227134924@qq.com</a>
+                <a href={`mailto:${contact_email}`} className="text-white/85 text-[14px] md:text-[15px] no-underline hover:text-white/95 transition-colors">{contact_email}</a>
               </div>
               <div className="flex gap-2.5 items-start">
                 <div className="flex flex-col items-center">
@@ -139,7 +140,7 @@ export default function Footer() {
         <Divider style={{ borderColor: "rgba(255,255,255,0.1)", margin: "32px 0 24px" }} />
 
         <div className="text-center text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-          &copy; 2022~{year || "2025"} 山东昊天金属科技有限公司 版权所有
+          {copyright_text || `© ${year || "2026"} 山东昊天金属科技有限公司 版权所有`}
           <span className="mx-2">|</span>
           <a
             href="https://beian.miit.gov.cn/"
@@ -148,7 +149,7 @@ export default function Footer() {
             className="no-underline hover:opacity-70"
             style={{ color: "rgba(255,255,255,0.65)" }}
           >
-            鲁ICP备202XXXXXXXX号-1
+            {icp_number || "鲁ICP备202XXXXXXXX号-1"}
           </a>
         </div>
       </div>

@@ -5,7 +5,7 @@ RUN npm config set registry https://registry.npmmirror.com
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json ./
 
 RUN npm install
 
@@ -30,7 +30,7 @@ COPY --from=builder /app/prisma ./prisma
 
 COPY package.json ./
 
-RUN npm prune --omit=dev && npx prisma generate
+RUN npm prune --omit=dev && npm install tsx && npx prisma generate
 
 EXPOSE 3001
 

@@ -5,7 +5,7 @@ import HomePageClient from "./HomePageClient";
 export const metadata: Metadata = {
   title: "首页",
   description:
-    "昊天金属科技是一家集催化材料研发、生产、销售与进出口贸易于一体的综合性企业。主营加氢催化剂、雷尼镍催化剂、镍铝合金粉、贵金属催化剂。",
+    "昊天金属科技是一家集催化材料研发、生产、销售与进出口贸易于一体的综合性企业。主营加氢催化剂、铝镍合金氢化催化剂、镍铝合金粉、贵金属催化剂。",
 };
 
 interface Banner {

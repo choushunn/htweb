@@ -5,7 +5,7 @@ import { success, fail } from "../../lib/response.js";
 const router = Router();
 
 // 公开设置键（可安全暴露给前端的配置项）
-const PUBLIC_KEYS = ["wechat_qr"];
+const PUBLIC_KEYS = ["wechat_qr", "contact_phone", "contact_email", "contact_address", "icp_number", "copyright_text"];
 
 // GET / - 获取公开设置
 router.get("/", async (_req, res) => {

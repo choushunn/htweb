@@ -125,6 +125,18 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const { message } = App.useApp();
   const [loading, setLoading] = useState(false);
+  const [copyrightText, setCopyrightText] = useState("");
+  const [icpNumber, setIcpNumber] = useState("");
+
+  useEffect(() => {
+    api.get("/api/settings").then((res) => {
+      const data = res.data?.data || res.data;
+      if (data) {
+        if (data.copyright_text) setCopyrightText(data.copyright_text);
+        if (data.icp_number) setIcpNumber(data.icp_number);
+      }
+    }).catch(() => {});
+  }, []);
 
   const onFinish = async (values: LoginForm) => {
     setLoading(true);
@@ -265,17 +277,17 @@ export default function AdminLoginPage() {
             </Form>
 
             <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-              <p className="text-gray-400 text-xs" suppressHydrationWarning>
-                &copy; {new Date().getFullYear()} 山东昊天金属科技有限公司
+              <p className="text-gray-400 text-sm" suppressHydrationWarning>
+                {copyrightText || "山东昊天金属科技有限公司"}
               </p>
-              <p className="text-gray-300 text-[10px] mt-1">
+              <p className="text-gray-400 text-xs mt-2">
                 <a
                   href="https://beian.miit.gov.cn/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-300 hover:text-gray-500 transition-colors no-underline"
+                  className="text-gray-400 hover:text-gray-600 transition-colors no-underline"
                 >
-                  鲁ICP备202XXXXXXXX号-1
+                  {icpNumber || "鲁ICP备202XXXXXXXX号-1"}
                 </a>
               </p>
             </div>

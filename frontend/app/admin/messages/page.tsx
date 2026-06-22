@@ -1,6 +1,6 @@
 "use client";
 
-import { Table, Button, Modal, Tag, Space, message, Popconfirm, Card, Breadcrumb, Input } from "antd";
+import { Table, Button, Modal, Tag, Space, App, Popconfirm, Card, Breadcrumb, Input } from "antd";
 import { EyeOutlined, CheckCircleOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ interface Message {
 
 export default function AdminMessagesPage() {
   const router = useRouter();
+  const { message } = App.useApp();
   const [data, setData] = useState<Message[]>([]);
   const [filteredData, setFilteredData] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,18 +54,17 @@ export default function AdminMessagesPage() {
     setFilteredData(data.filter((item) => item.name.toLowerCase().includes(q) || item.content.toLowerCase().includes(q)));
   }, [searchText, data]);
 
-  const handleView = (record: Message) => {
+  const handleView = async (record: Message) => {
     setViewingItem(record);
     setViewModalOpen(true);
-  };
-
-  const handleMarkRead = async (id: number) => {
-    try {
-      await api.put(`/api/admin/messages/${id}/read`);
-      message.success("已标记为已读");
-      fetchData();
-    } catch (error) {
-      message.error("操作失败");
+    // 查看后自动标记为已读
+    if (!record.isRead) {
+      try {
+        await api.put(`/api/admin/messages/${record.id}/read`);
+        fetchData();
+      } catch {
+        // 静默处理
+      }
     }
   };
 
@@ -79,10 +79,19 @@ export default function AdminMessagesPage() {
   };
 
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id", sorter: (a: any, b: any) => a.id - b.id },
-    { title: "姓名", dataIndex: "name", key: "name", sorter: (a: any, b: any) => (a.name || '').localeCompare(b.name || '') },
-    { title: "电话", dataIndex: "phone", key: "phone", sorter: (a: any, b: any) => (a.phone || '').localeCompare(b.phone || '') },
-    { title: "邮箱", dataIndex: "email", key: "email", ellipsis: true, sorter: (a: any, b: any) => (a.email || '').localeCompare(b.email || '') },
+    { title: "ID", dataIndex: "id", key: "id", width: "5%", sorter: (a: any, b: any) => a.id - b.id },
+    {
+      title: "留言人",
+      key: "contact",
+      width: "12%",
+      ellipsis: true,
+      render: (_: any, record: Message) => (
+        <span className="cursor-pointer text-[#0070d5] hover:underline" onClick={() => handleView(record)}>
+          {record.name}
+        </span>
+      ),
+      sorter: (a: any, b: any) => (a.name || '').localeCompare(b.name || ''),
+    },
     {
       title: "留言内容",
       dataIndex: "content",
@@ -94,43 +103,35 @@ export default function AdminMessagesPage() {
       title: "状态",
       dataIndex: "isRead",
       key: "isRead",
+      width: "7%",
       render: (isRead: boolean) =>
-        isRead ? <Tag>已读</Tag> : <Tag color="red">未读</Tag>,
+        isRead ? <Tag>已读</Tag> : <Tag color="blue">未读</Tag>,
       sorter: (a: any, b: any) => Number(a.isRead) - Number(b.isRead),
     },
     {
       title: "提交时间",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date: string) => (date ? new Date(date).toLocaleString("zh-CN") : "-"),
+      width: "14%",
+      render: (date: string) =>
+        date
+          ? new Date(date).toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" }) +
+            " " +
+            new Date(date).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })
+          : "-",
       sorter: (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     },
     {
       title: "操作",
       key: "action",
+      width: "14%",
       render: (_: any, record: Message) => (
-        <Space>
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => handleView(record)}
-          >
+        <Space size={0}>
+          <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => handleView(record)}>
             查看
           </Button>
-          {!record.isRead && (
-            <Button
-              type="link"
-              icon={<CheckCircleOutlined />}
-              onClick={() => handleMarkRead(record.id)}
-            >
-              标记已读
-            </Button>
-          )}
-          <Popconfirm
-            title="确定要删除这条留言吗？"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
+          <Popconfirm title="确定要删除这条留言吗？" onConfirm={() => handleDelete(record.id)}>
+            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
               删除
             </Button>
           </Popconfirm>
@@ -166,7 +167,7 @@ export default function AdminMessagesPage() {
           />
         </div>
       </div>
-      <Card className="admin-table-card shadow-sm" variant="outlined">
+      <Card className="admin-table-card shadow-sm" variant="outlined" styles={{ body: { overflow: 'hidden' } }}>
         <Table
           rowKey="id"
           columns={columns}
@@ -174,6 +175,7 @@ export default function AdminMessagesPage() {
           loading={loading}
           pagination={{ pageSize: 10, showSizeChanger: false, showTotal: (total) => `共 ${total} 条`, hideOnSinglePage: true }}
           showSorterTooltip={false}
+          tableLayout="fixed"
           rowClassName={(record: Message) => (record.isRead ? "" : "bg-blue-50")}
         />
       </Card>
@@ -192,29 +194,51 @@ export default function AdminMessagesPage() {
         destroyOnHidden
       >
         {viewingItem && (
-          <div className="space-y-3">
-            <div>
-              <strong>姓名：</strong>
-              {viewingItem.name}
+          <div>
+            {/* 联系信息卡片 */}
+            <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-5 mb-4 border border-gray-100">
+              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#0070d5] to-[#60a5fa] flex items-center justify-center text-white text-xl font-semibold shadow-sm shrink-0">
+                  {viewingItem.name.charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-lg font-medium text-gray-900">{viewingItem.name}</div>
+                  <div className="text-sm text-gray-400 mt-0.5">
+                    {viewingItem.createdAt
+                      ? new Date(viewingItem.createdAt).toLocaleString("zh-CN")
+                      : "-"}
+                  </div>
+                </div>
+                <Tag
+                  color={viewingItem.isRead ? "default" : "blue"}
+                  className="!text-sm !px-3 !py-0.5 !leading-6 !border-0 shrink-0"
+                >
+                  {viewingItem.isRead ? "已读" : "未读"}
+                </Tag>
+              </div>
+              <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">电话</div>
+                  <div className="text-base text-gray-700">
+                    {viewingItem.phone || <span className="text-gray-300">未填写</span>}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">邮箱</div>
+                  <div className="text-base text-gray-700 break-all">
+                    {viewingItem.email || <span className="text-gray-300">未填写</span>}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <strong>电话：</strong>
-              {viewingItem.phone}
-            </div>
-            <div>
-              <strong>邮箱：</strong>
-              {viewingItem.email}
-            </div>
-            <div>
-              <strong>提交时间：</strong>
-              {viewingItem.createdAt
-                ? new Date(viewingItem.createdAt).toLocaleString("zh-CN")
-                : "-"}
-            </div>
-            <div>
-              <strong>留言内容：</strong>
-              <div className="mt-2 p-3 bg-gray-50 rounded whitespace-pre-wrap">
-                {viewingItem.content}
+
+            {/* 留言内容卡片 */}
+            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+              <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100">
+                <span className="text-base font-medium text-gray-500">留言内容</span>
+              </div>
+              <div className="p-5 text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {viewingItem.content || <span className="text-gray-300">无内容</span>}
               </div>
             </div>
           </div>

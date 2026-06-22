@@ -1,10 +1,11 @@
 import Link from "next/link";
 import ScrollRevealWrapper from "./ScrollRevealWrapper";
 import type { Metadata } from "next";
+import { COMPANY } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "关于我们 - 山东昊天金属科技",
-  description: "山东昊天金属科技有限公司成立于2022年，专注催化材料研发、生产、销售与服务，产品出口30余国家，注册资本1000万元。",
+  description: "山东昊天金属科技有限公司成立于2022年，专注催化材料研发、生产、销售与服务，产品出口10余国家，注册资本1000万元。",
 };
 
 function Icon({ d, viewBox = "0 0 24 24" }: { d: string; viewBox?: string }) {
@@ -30,11 +31,11 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle?: string })
 }
 
 const MILESTONES = [
-  { year: "2022", event: "公司成立，落户青岛莱西市，注册资本1000万元" },
-  { year: "2023", event: "通过ISO9001质量管理体系认证，建立完整品控体系" },
-  { year: "2024", event: "产品出口突破30个国家，年出口额超5000万元" },
-  { year: "2025", event: "扩建研发中心，获得多项催化材料技术专利" },
   { year: "2026", event: "启动二期厂房建设，产能提升200%，布局新能源材料" },
+  { year: "2025", event: "扩建研发中心，获得多项催化材料技术专利" },
+  { year: "2024", event: "产品出口突破10+个国家，年出口额超5000万元" },
+  { year: "2023", event: "通过ISO9001质量管理体系认证，建立完整品控体系" },
+  { year: "2022", event: `公司成立，落户${COMPANY.addressCity}，注册资本1000万元` },
 ];
 
 const VALUES = [
@@ -91,13 +92,13 @@ export default function AboutPage() {
           <SectionTitle title="公司简介" subtitle="About Us" />
           <div className="max-w-4xl mx-auto">
             <p className="text-base md:text-lg leading-[2] text-gray-700 mb-5">
-              山东昊天金属科技有限公司成立于2022年，坐落于山东省青岛市莱西市，是一家集催化材料研发、生产加工、销售服务与进出口贸易于一体的综合性高新技术企业。公司注册资本1000万元，占地约5万平方米，拥有现代化标准厂房3万余平方米。
+              山东昊天金属科技有限公司成立于2022年，坐落于{COMPANY.addressShort}，是一家集催化材料研发、生产加工、销售服务与进出口贸易于一体的综合性高新技术企业。公司注册资本1000万元，占地约5万平方米，拥有现代化标准厂房3万余平方米。
             </p>
             <p className="text-base md:text-lg leading-[2] text-gray-700 mb-5">
-              公司配备先进的生产设备和检测仪器，主要产品涵盖加氢催化剂、雷尼镍催化剂、镍铝合金粉、贵金属催化剂等多个品类，广泛应用于石油化工、医药合成、精细化学品、新能源等领域。
+              公司配备先进的生产设备和检测仪器，主要产品涵盖加氢催化剂、铝镍合金氢化催化剂、镍铝合金粉、贵金属催化剂等多个品类，广泛应用于石油化工、医药合成、精细化学品、新能源等领域。
             </p>
             <p className="text-base md:text-lg leading-[2] text-gray-700 mb-5">
-              公司始终坚持"质量第一、客户至上"的经营理念，先后通过ISO9001质量管理体系认证、ISO14001环境管理体系认证，产品质量达到国际先进水平。凭借过硬的产品质量和优质的服务，产品畅销全国各省市，并远销东南亚、中东、欧美等30余个国家和地区。
+              公司始终坚持"质量第一、客户至上"的经营理念，先后通过ISO9001质量管理体系认证、ISO14001环境管理体系认证，产品质量达到国际先进水平。凭借过硬的产品质量和优质的服务，产品畅销全国各省市，并远销东南亚、欧美等10余个国家和地区。
             </p>
           </div>
         </ScrollRevealWrapper>
@@ -107,7 +108,7 @@ export default function AboutPage() {
             {[
               { value: "1000万+", label: "注册资本", icon: <Icon d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-2h-2v2zm0-4h2V7h-2v6z" /> },
               { value: "50+", label: "产品品类", icon: <Icon d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" /> },
-              { value: "30+", label: "出口国家", icon: <Icon d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" /> },
+              { value: "10+", label: "出口国家", icon: <Icon d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" /> },
               { value: "5000万+", label: "年出口额", icon: <Icon d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z" /> },
             ].map((stat) => (
               <div key={stat.label} className="text-center py-10 px-4 bg-[#f7f9fa] border border-[#0070d5]/10 transition-[box-shadow,transform] duration-300 hover:shadow-md hover:-translate-y-1">

@@ -34,13 +34,11 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-16">
           {images.length > 0 ? (
             <div className="space-y-4">
-              <div className="relative bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm [&_.ant-image]:!block [&_.ant-image]:!w-full [&_.ant-image]:!h-full" style={{ height: 420 }}>
+              <div className="relative bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm [&_.ant-image]:!block [&_.ant-image]:!w-full [&_.ant-image]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:object-cover" style={{ height: 420 }}>
                 <Image.PreviewGroup>
                   <Image
                     src={images[selectedImage]}
                     alt={product.name}
-                    className="!w-full !h-full object-cover"
-                    style={{ objectFit: "cover" }}
                     preview={{ cover: <div className="text-sm">点击查看大图</div> }}
                   />
                 </Image.PreviewGroup>

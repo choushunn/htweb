@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Breadcrumb, Alert } from "antd";
 import Link from "next/link";
+import { Alert } from "antd";
 import serverFetch from "@/lib/serverApi";
 import ProductDetailClient from "./ProductDetailClient";
 
@@ -43,7 +43,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (error) {
     return (
       <div className="max-w-6xl mx-auto py-12 px-4">
-        <Alert title={error} type="error" showIcon />
+        <div className="text-center py-16 text-gray-400">
+          <div className="text-5xl mb-4 text-gray-300">&#128196;</div>
+          <p className="text-lg mb-4">暂无数据</p>
+          <Link href="/products" className="text-brand hover:text-brand-hover underline text-base">
+            &larr; 返回产品列表
+          </Link>
+        </div>
       </div>
     );
   }

@@ -23,9 +23,11 @@ const IMG = {
   product6: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Amorphous%20nickel%20alloy%20catalyst%20powder%20in%20laboratory%20container%2C%20advanced%20catalyst%20material%2C%20fine%20gray%20powder%2C%20chemical%20industry&image_size=square_hd",
 
   // Certificates
-  cert1: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ISO%209001%20quality%20management%20system%20certificate%20for%20chemical%20company%2C%20official%20document%20with%20golden%20seal%20and%20signature&image_size=portrait_4_3",
-  cert2: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ISO%2014001%20environmental%20management%20certificate%20for%20chemical%20plant%2C%20official%20document%20with%20green%20seal&image_size=portrait_4_3",
-  cert3: "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Chinese%20government%20business%20license%20for%20chemical%20company%2C%20official%20document%20with%20red%20seal%2C%20formal%20certification&image_size=portrait_4_3",
+  cert1: "/certificates/iso9001.jpg",
+  cert2: "/certificates/iso14001.jpg",
+  cert3: "/certificates/ohsas.jpg",
+  cert4: "/certificates/license.jpg",
+  cert5: "/certificates/dangerous-chemicals.jpg",
 };
 
 async function main() {
@@ -36,6 +38,7 @@ async function main() {
     await tx.news.deleteMany();
     await tx.certificate.deleteMany();
     await tx.banner.deleteMany();
+    await tx.siteSetting.deleteMany();
 
     // 1. 创建默认管理员
     const hashedPassword = bcrypt.hashSync("admin123", 10);
@@ -51,21 +54,21 @@ async function main() {
         {
           title: "山东昊天催化科技亮相2024中国国际催化剂展览会",
           summary: "公司携全线催化剂产品参展，达成多项合作意向。",
-          content: `<p>2024年12月，山东昊天催化科技有限公司亮相中国国际催化剂与催化技术展览会，展示了包括雷尼镍催化剂、镍铝合金粉、贵金属催化剂在内的全线产品。</p><p>展会期间，公司展位吸引了大量国内外客户参观咨询，现场达成合作意向逾千万元。</p><blockquote><p>"我们将持续优化产品品质和服务体验，为客户提供更优质的催化解决方案。"——公司总经理</p></blockquote>`,
+          content: `<p>2024年12月，山东昊天催化科技有限公司亮相中国国际催化剂与催化技术展览会，展示了包括铝镍合金氢化催化剂、镍铝合金粉、贵金属催化剂在内的全线产品。</p><p>展会期间，公司展位吸引了大量国内外客户参观咨询，现场达成合作意向逾千万元。</p><blockquote><p>"我们将持续优化产品品质和服务体验，为客户提供更优质的催化解决方案。"——公司总经理</p></blockquote>`,
           coverImage: IMG.news1,
           isPublished: true,
         },
         {
           title: "公司引进新型催化剂生产线，产能提升40%",
           summary: "投资2000万元引进的全自动催化剂生产线正式投产。",
-          content: `<p>公司近期完成了新型催化剂生产线的安装调试工作，该生产线引进自德国，总投资额达2000万元人民币。</p><p>新产线投产后，雷尼镍系列催化剂产品的产能将提升40%，产品品质达到国际先进水平，可满足全球客户对高品质加氢催化剂的需求。</p><ul><li>产品粒度精度提升至±1μm</li><li>年产能增加2000吨</li><li>能耗降低25%</li></ul>`,
+          content: `<p>公司近期完成了新型催化剂生产线的安装调试工作，该生产线引进自德国，总投资额达2000万元人民币。</p><p>新产线投产后，铝镍合金氢化催化剂系列产品的产能将提升40%，产品品质达到国际先进水平，可满足全球客户对高品质加氢催化剂的需求。</p><ul><li>产品粒度精度提升至±1μm</li><li>年产能增加2000吨</li><li>能耗降低25%</li></ul>`,
           coverImage: IMG.news2,
           isPublished: true,
         },
         {
           title: "山东昊天催化科技与东南亚客户签订长期供货协议",
           summary: "公司开拓海外市场取得新突破，年出口额预计增长50%。",
-          content: `<p>山东昊天催化科技有限公司近日与多家东南亚客户签订了长期战略供货协议，合同总金额超过5000万元。</p><p>协议涵盖雷尼镍催化剂、镍铝合金粉、贵金属催化剂等核心产品，标志着公司在海外市场拓展方面取得了重要突破。</p>`,
+          content: `<p>山东昊天催化科技有限公司近日与多家东南亚客户签订了长期战略供货协议，合同总金额超过5000万元。</p><p>协议涵盖铝镍合金氢化催化剂、镍铝合金粉、贵金属催化剂等核心产品，标志着公司在海外市场拓展方面取得了重要突破。</p>`,
           coverImage: IMG.news3,
           isPublished: true,
         },
@@ -76,7 +79,7 @@ async function main() {
     const cat1 = await tx.category.create({ data: { name: "加氢催化剂", sort: 1 } });
     const cat2 = await tx.category.create({ data: { name: "镍铝合金粉", sort: 2 } });
     const cat3 = await tx.category.create({ data: { name: "铝镍合金氢化催化剂", sort: 3 } });
-    const cat4 = await tx.category.create({ data: { name: "雷尼镍催化剂", sort: 4 } });
+    const cat4 = await tx.category.create({ data: { name: "铝镍合金氢化催化剂（R-Ni型）", sort: 4 } });
     const cat5 = await tx.category.create({ data: { name: "非晶态铝镍合金氢化催化剂", sort: 5 } });
     const cat6 = await tx.category.create({ data: { name: "贵金属催化剂", sort: 6 } });
     const cat7 = await tx.category.create({ data: { name: "雷尼钴催化剂", sort: 7 } });
@@ -108,8 +111,8 @@ async function main() {
         {
           name: "镍铝合金粉（活化型）",
           categoryId: cat2.id,
-          description: "高活性镍铝合金粉，碱活化后制备雷尼镍催化剂",
-          detail: `<p>镍铝合金粉是制备雷尼镍催化剂的关键原料，公司采用先进熔炼工艺生产，成分均匀、活性高。</p><p><strong>技术指标：</strong></p><ul><li>Ni含量：40%-50%</li><li>Al含量：50%-60%</li><li>粒度：50-500μm（可调）</li><li>活化后活性≥行业标准</li></ul>`,
+          description: "高活性镍铝合金粉，碱活化后制备铝镍合金氢化催化剂",
+          detail: `<p>镍铝合金粉是制备铝镍合金氢化催化剂的关键原料，公司采用先进熔炼工艺生产，成分均匀、活性高。</p><p><strong>技术指标：</strong></p><ul><li>Ni含量：40%-50%</li><li>Al含量：50%-60%</li><li>粒度：50-500μm（可调）</li><li>活化后活性≥行业标准</li></ul>`,
           images: [IMG.product2],
           sort: 1,
           isPublished: true,
@@ -133,21 +136,21 @@ async function main() {
           sort: 1,
           isPublished: true,
         },
-        // 雷尼镍催化剂
+        // 铝镍合金氢化催化剂（R-Ni型）
         {
-          name: "R-Ni 型雷尼镍催化剂",
+          name: "R-Ni 型铝镍合金氢化催化剂",
           categoryId: cat4.id,
-          description: "标准型雷尼镍催化剂，广泛用于有机合成加氢",
-          detail: `<p>R-Ni型雷尼镍催化剂是公司主力产品，采用优质镍铝合金粉经活化工艺制备，产品性能稳定。</p><p><strong>应用领域：</strong></p><ul><li>医药中间体加氢</li><li>精细化学品合成</li><li>油脂加氢</li><li>石油化工</li></ul><p><strong>包装：</strong>20kg/桶，50kg/桶（水封包装）</p>`,
+          description: "标准型铝镍合金氢化催化剂，广泛用于有机合成加氢",
+          detail: `<p>R-Ni型铝镍合金氢化催化剂是公司主力产品，采用优质镍铝合金粉经活化工艺制备，产品性能稳定。</p><p><strong>应用领域：</strong></p><ul><li>医药中间体加氢</li><li>精细化学品合成</li><li>油脂加氢</li><li>石油化工</li></ul><p><strong>包装：</strong>20kg/桶，50kg/桶（水封包装）</p>`,
           images: [IMG.product1],
           sort: 1,
           isPublished: true,
         },
         {
-          name: "R-Ni 高活性雷尼镍催化剂",
+          name: "R-Ni 高活性铝镍合金氢化催化剂",
           categoryId: cat4.id,
-          description: "高活性型雷尼镍催化剂，反应条件更温和",
-          detail: `<p>高活性型雷尼镍催化剂经特殊活化处理，具有更高的催化活性，可在更温和的条件下完成加氢反应。</p>`,
+          description: "高活性型铝镍合金氢化催化剂，反应条件更温和",
+          detail: `<p>高活性型铝镍合金氢化催化剂经特殊活化处理，具有更高的催化活性，可在更温和的条件下完成加氢反应。</p>`,
           images: [IMG.product1],
           sort: 2,
           isPublished: true,
@@ -219,7 +222,9 @@ async function main() {
       data: [
         { title: "ISO 9001 质量管理体系认证", imageUrl: IMG.cert1, sort: 1, isPublished: true },
         { title: "ISO 14001 环境管理体系认证", imageUrl: IMG.cert2, sort: 2, isPublished: true },
-        { title: "企业营业执照", imageUrl: IMG.cert3, sort: 3, isPublished: true },
+        { title: "ISO 45001 职业健康安全管理体系认证", imageUrl: IMG.cert3, sort: 3, isPublished: true },
+        { title: "企业营业执照", imageUrl: IMG.cert4, sort: 4, isPublished: true },
+        { title: "危险化学品经营许可证", imageUrl: IMG.cert5, sort: 5, isPublished: true },
       ],
     });
 
@@ -237,9 +242,9 @@ async function main() {
       data: [
         { key: "contact_phone", value: "13210894158" },
         { key: "contact_email", value: "1227134924@qq.com" },
-        { key: "contact_address", value: "山东省青岛市莱西市南墅镇水晶路17号" },
-        { key: "copyright_text", value: "© 2026 山东昊天金属科技有限公司 版权所有" },
-        { key: "icp_number", value: "" },
+        { key: "contact_address", value: "山东省临沂市沂河新区朝阳街道综合保税区东方跨境电商产业园20楼2010-2室" },
+        { key: "copyright_text", value: "© 2022~2026 山东昊天金属科技有限公司 版权所有" },
+        { key: "icp_number", value: "鲁ICP备202XXXXXXXX号-2" },
         { key: "wechat_qr", value: "/wechat.png" },
       ],
     });

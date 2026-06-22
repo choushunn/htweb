@@ -48,7 +48,7 @@ interface CategoryItem {
 }
 
 interface MessageTrend {
-  date: string;
+  week: string;
   count: number;
 }
 
@@ -104,6 +104,7 @@ export default function AdminDashboardPage() {
           api.get("/api/admin/dashboard"),
         ]);
 
+        const getTotal = (res: any) => res.data?.pagination?.total || 0;
         const getList = (res: any) => {
           const d = res.data;
           if (Array.isArray(d)) return d;
@@ -113,9 +114,9 @@ export default function AdminDashboardPage() {
           return [];
         };
 
-        const newsTotal = newsRes.data?.total || 0;
-        const productsTotal = productsRes.data?.total || 0;
-        const messagesTotal = messagesRes.data?.total || 0;
+        const newsTotal = getTotal(newsRes);
+        const productsTotal = getTotal(productsRes);
+        const messagesTotal = getTotal(messagesRes);
 
         const messages = getList(messagesRes);
         const unreadCount = Array.isArray(messages)
@@ -135,7 +136,7 @@ export default function AdminDashboardPage() {
         setRecentMessages(messages.slice(0, 5));
 
         // 设置图表数据
-        const dashboardData = dashboardRes.data;
+        const dashboardData = dashboardRes.data?.data || dashboardRes.data;
         setMonthlyContent(dashboardData?.monthlyContent || []);
         setCategoryDistribution(dashboardData?.categoryDistribution || []);
         setMessageTrend(dashboardData?.messageTrend || []);
@@ -276,9 +277,9 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        {/* 近7天留言趋势 */}
+        {/* 近1月留言趋势（按周） */}
         <Card
-          title="近7天留言趋势"
+          title="近1月留言趋势"
           size="small"
           loading={loading}
           className="w-full h-full"
@@ -286,14 +287,13 @@ export default function AdminDashboardPage() {
           <div className="h-[238px]">
             {messageTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={238}>
-                <BarChart data={messageTrend} barSize={22}>
+                <BarChart data={messageTrend} barSize={36}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#6b7280" }} tickLine={false} axisLine={{ stroke: "#e5e7eb" }}
-                    tickFormatter={(val: string) => val.slice(5)} />
+                  <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#6b7280" }} tickLine={false} axisLine={{ stroke: "#e5e7eb" }} />
                   <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} tickLine={false} axisLine={false} allowDecimals={false} width={25} />
                   <Tooltip
                     contentStyle={{ borderRadius: 6, border: "1px solid #e5e7eb", padding: "8px 12px", fontSize: 12 }}
-                    labelFormatter={(val: any) => `${val} 留言`}
+                    labelFormatter={(val: any) => `${val} 周`}
                   />
                   <Bar dataKey="count" name="留言数" fill="#0070d5" radius={[3, 3, 0, 0]} />
                 </BarChart>
@@ -309,30 +309,106 @@ export default function AdminDashboardPage() {
       {/* 底部：最近的留言 + 快捷操作 */}
       <div className="grid grid-cols-2 gap-4 shrink-0">
         <Card
-          title="最近的留言"
+          title={
+            <Space size={8}>
+              <span className="text-sm font-medium">最近的留言</span>
+              {recentMessages.filter(m => !m.isRead).length > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#0070d5] text-white text-[11px] font-medium leading-none">
+                  {recentMessages.filter(m => !m.isRead).length}
+                </span>
+              )}
+            </Space>
+          }
           size="small"
           loading={loading}
-          extra={<Link href="/admin/messages" className="text-xs">查看全部</Link>}
-          styles={{ body: { padding: "8px 16px" } }}
+          extra={<Link href="/admin/messages" className="text-xs text-[#0070d5] hover:text-[#005bb5] transition-colors">查看全部 →</Link>}
+          styles={{ body: { padding: "4px 0" } }}
+          className="overflow-hidden"
         >
           {recentMessages.length === 0 ? (
-            <div className="text-center py-4 text-gray-400 text-xs">暂无留言</div>
+            <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+              <MessageOutlined className="text-3xl mb-2" />
+              <span className="text-xs">暂无留言</span>
+            </div>
           ) : (
             <div>
               {recentMessages.slice(0, 3).map((item, idx) => (
-                <div key={idx} className={(!item.isRead ? "bg-blue-50 -mx-4 px-4 rounded " : "") + "-mx-4 px-4"} style={{ padding: "6px 0" }}>
-                  <div className="w-full">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <Space size={6}>
-                        <Text strong className="text-sm">{item.name}</Text>
-                        {!item.isRead && <Tag color="blue" className="!text-[11px] !px-1.5 !py-0 !leading-5">未读</Tag>}
+                <div
+                  key={item.id}
+                  className="relative px-4 py-3 transition-all duration-200 cursor-default"
+                  style={{
+                    animation: `slideIn 0.3s ease-out ${idx * 0.08}s both`,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!item.isRead) return;
+                    (e.currentTarget as HTMLElement).style.backgroundColor = '#f8fafc';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!item.isRead) return;
+                    (e.currentTarget as HTMLElement).style.backgroundColor = '';
+                  }}
+                >
+                  {/* 未读指示条 */}
+                  {!item.isRead && (
+                    <div className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r-full bg-gradient-to-b from-[#0070d5] to-[#60a5fa]" />
+                  )}
+                  
+                  {/* 背景 */}
+                  <div
+                    className="absolute inset-0 transition-all duration-200"
+                    style={{
+                      background: !item.isRead
+                        ? 'linear-gradient(to right, rgba(59,130,246,0.06), transparent)'
+                        : undefined,
+                      borderRadius: 0,
+                    }}
+                  />
+                  
+                  {/* 内容 */}
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-1">
+                      <Space size={8}>
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium ${
+                            !item.isRead
+                              ? 'bg-gradient-to-br from-[#0070d5] to-[#60a5fa] shadow-sm'
+                              : 'bg-gray-200'
+                          }`}
+                        >
+                          {item.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <Text
+                            strong
+                            className={`text-sm leading-none block ${
+                              !item.isRead ? 'text-gray-900' : 'text-gray-600'
+                            }`}
+                          >
+                            {item.name}
+                          </Text>
+                        </div>
+                        {!item.isRead && (
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#0070d5] animate-pulse" />
+                        )}
                       </Space>
-                      <Text type="secondary" className="text-[11px]">
-                        {new Date(item.createdAt).toLocaleDateString("zh-CN")}
-                      </Text>
+                      <Space size={6}>
+                        {!item.isRead && (
+                          <span className="text-[11px] font-medium text-[#0070d5]">新</span>
+                        )}
+                        <span className="text-[11px] text-gray-400">
+                          {new Date(item.createdAt).toLocaleDateString("zh-CN", { month: '2-digit', day: '2-digit' })}
+                        </span>
+                      </Space>
                     </div>
-                    <Text type="secondary" className="text-xs block truncate leading-6">{item.content}</Text>
+                    <p className="text-xs text-gray-500 leading-relaxed truncate pl-9 m-0">
+                      {item.content}
+                    </p>
                   </div>
+
+                  {/* 分割线 */}
+                  {idx < Math.min(recentMessages.length, 3) - 1 && (
+                    <div className="absolute bottom-0 left-4 right-4 h-[1px] bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100" />
+                  )}
                 </div>
               ))}
             </div>

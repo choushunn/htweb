@@ -6,7 +6,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 
 export default function TopBar() {
   const pathname = usePathname();
-  const { wechatQr } = useSettings();
+  const { wechatQr, contact_phone, contact_email } = useSettings();
 
   if (pathname.startsWith("/admin")) return null;
 
@@ -15,13 +15,13 @@ export default function TopBar() {
       <div className="max-w-[1200px] w-full mx-auto px-4 md:px-12 flex items-center justify-between">
         <span className="hidden md:inline">欢迎访问山东昊天金属科技有限公司官网</span>
         <div className="flex items-center gap-3 md:gap-6">
-          <a href="tel:13210894158" suppressHydrationWarning className="flex items-center gap-1.5 text-white/70 no-underline hover:text-white/90 transition-colors">
+          <a href={`tel:${contact_phone}`} suppressHydrationWarning className="flex items-center gap-1.5 text-white/70 no-underline hover:text-white/90 transition-colors">
             <PhoneFilled aria-hidden="true" className="text-xs" />
-            132-1089-4158
+            {contact_phone?.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3") || contact_phone}
           </a>
           <span className="hidden sm:flex items-center gap-1.5">
             <MailFilled aria-hidden="true" className="text-xs" />
-            <a href="mailto:1227134924@qq.com" className="text-white/70 no-underline hover:text-white/90 border-b border-b-transparent hover:border-b-white transition-[color,border-color] duration-200">1227134924@qq.com</a>
+            <a href={`mailto:${contact_email}`} className="text-white/70 no-underline hover:text-white/90 border-b border-b-transparent hover:border-b-white transition-[color,border-color] duration-200">{contact_email}</a>
           </span>
           <div className="relative group">
             <span className="flex items-center gap-1.5 cursor-pointer">

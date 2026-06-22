@@ -62,7 +62,17 @@ export default function NewsPageClient({
 
   return (
     <>
-      <div className="w-full h-[260px] md:h-[320px] bg-cover bg-center" style={{ backgroundImage: "url(https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Modern%20news%20media%20studio%20background%2C%20clean%20minimalist%20light%20tones%2C%20abstract%20communication%20patterns%2C%20corporate%20news%20banner&image_size=landscape_16_9)" }} />
+      <div className="w-full h-[260px] md:h-[320px] bg-cover bg-center relative" style={{ backgroundImage: "url(https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Modern%20news%20media%20studio%20background%2C%20clean%20minimalist%20light%20tones%2C%20abstract%20communication%20patterns%2C%20corporate%20news%20banner&image_size=landscape_16_9)" }}>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0070d5]/80 to-black/40" />
+        <div className="absolute bottom-10 left-0 right-0 text-center">
+          <h1 className="text-white text-[36px] md:text-[48px] font-bold tracking-wider">
+            新闻中心
+          </h1>
+          <p className="text-white/80 text-base md:text-lg mt-2">
+            了解最新动态与行业资讯
+          </p>
+        </div>
+      </div>
       <div className="max-w-6xl mx-auto py-12 px-4">
         <div className="mb-8">
           <Breadcrumb

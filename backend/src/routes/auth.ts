@@ -32,10 +32,14 @@ router.post("/login", async (req: Request, res: Response) => {
     }
 
     const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      fail(res, "服务器配置错误：JWT_SECRET 未设置", 500);
+      return;
+    }
     const token = jwt.sign(
       { id: admin.id, username: admin.username },
       secret,
-      { expiresIn: "7d" }
+      { expiresIn: "4h" }
     );
 
     success(res, { token, username: admin.username });
@@ -49,7 +53,7 @@ router.post("/login", async (req: Request, res: Response) => {
 router.put("/password", authenticateToken, async (req: Request, res: Response) => {
   try {
     const { oldPassword, newPassword } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = (req as any).user?.adminId;
 
     if (!userId) {
       fail(res, "未登录", 401);

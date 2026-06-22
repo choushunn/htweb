@@ -13,7 +13,7 @@ import {
   Space,
   Tag,
   Image,
-  message,
+  App,
   Popconfirm,
   Card,
   Breadcrumb,
@@ -23,8 +23,9 @@ import {
   EditOutlined,
   DeleteOutlined,
   UploadOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { UploadFile } from "antd";
 import api from "@/lib/api";
@@ -49,6 +50,7 @@ interface Category {
 
 export default function AdminProductsPage() {
   const router = useRouter();
+  const { message } = App.useApp();
   const [data, setData] = useState<Product[]>([]);
   const [filteredData, setFilteredData] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -109,6 +111,70 @@ export default function AdminProductsPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Custom dropdown to replace Ant Design Select (doesn't open properly inside Modal)
+  function CategoryDropdown({
+    value,
+    onChange: onChangeProp,
+  }: {
+    value?: number;
+    onChange?: (value: number) => void;
+  }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      const handleClick = (e: MouseEvent) => {
+        if (ref.current && !ref.current.contains(e.target as Node)) {
+          setOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }, []);
+
+    const selected = categories.find((c) => c.id === value);
+
+    return (
+      <div ref={ref} className="relative">
+        <div
+          className="border border-gray-300 rounded-md px-3 py-[5px] cursor-pointer flex items-center justify-between bg-white hover:border-[#0070d5] transition-colors text-sm"
+          onClick={() => setOpen(!open)}
+        >
+          <span className={selected ? "text-gray-900" : "text-gray-400"}>
+            {selected ? selected.name : "请选择分类"}
+          </span>
+          <DownOutlined
+            className={`text-[10px] text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        </div>
+        {open && (
+          <div className="absolute z-[1000] mt-[2px] w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+            {categories.length === 0 ? (
+              <div className="px-3 py-2 text-gray-400 text-sm">暂无分类</div>
+            ) : (
+              categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className={`px-3 py-2 cursor-pointer text-sm hover:bg-blue-50 transition-colors ${
+                    value === cat.id
+                      ? "bg-blue-50 text-[#0070d5] font-medium"
+                      : "text-gray-700"
+                  }`}
+                  onClick={() => {
+                    onChangeProp?.(cat.id);
+                    setOpen(false);
+                  }}
+                >
+                  {cat.name}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const categoryMap = categories.reduce<Record<number, string>>(
     (map, cat) => {
@@ -208,7 +274,7 @@ export default function AdminProductsPage() {
   };
 
   const columns = [
-    { title: "ID", dataIndex: "id", key: "id", width: 60, sorter: (a: any, b: any) => a.id - b.id },
+    { title: "ID", dataIndex: "id", key: "id", sorter: (a: any, b: any) => a.id - b.id },
     {
       title: "图片",
       dataIndex: "images",
@@ -320,76 +386,122 @@ export default function AdminProductsPage() {
       </Card>
 
       <Modal
-        title={editingItem ? "编辑产品" : "新增产品"}
+        title={
+          <span className="text-base font-semibold text-gray-800 tracking-wide">
+            {editingItem ? "编辑产品" : "新增产品"}
+          </span>
+        }
         open={modalOpen}
         onOk={handleSubmit}
         onCancel={() => {
           setModalOpen(false);
+          form.resetFields();
           setFileList([]);
         }}
         confirmLoading={submitting}
-        width={720}
+        width={800}
         centered
-        destroyOnHidden
         okText="确定"
         cancelText="取消"
-        okButtonProps={{ className: "bg-[#0070d5] hover:bg-[#005bb5] border-none shadow-sm" }}
+        okButtonProps={{ className: "bg-[#0070d5] hover:bg-[#005bb5] border-none shadow-sm px-5" }}
+        afterClose={() => form.resetFields()}
+        classNames={{ body: "px-6 py-2" }}
       >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="name"
-            label="名称"
-            rules={[{ required: true, message: "请输入产品名称" }]}
-          >
-            <Input placeholder="请输入产品名称" />
-          </Form.Item>
-          <Form.Item
-            name="categoryId"
-            label="分类"
-            rules={[{ required: true, message: "请选择产品分类" }]}
-          >
-            <Select placeholder="请选择分类" options={categories.map((cat) => ({ label: cat.name, value: cat.id }))} />
-          </Form.Item>
-          <Form.Item name="summary" label="简介">
-            <Input.TextArea rows={3} placeholder="请输入产品简介" />
-          </Form.Item>
-          <Form.Item name="description" label="详细描述">
-            <Input.TextArea rows={6} placeholder="请输入产品详细描述" />
-          </Form.Item>
-          <Form.Item label="产品说明书" required>
-            <RichTextEditor
-              key={editorKey}
-              content={editorContent}
-              onChange={setEditorContent}
-            />
-          </Form.Item>
-          <Form.Item label="图片（多张）">
-            <Upload
-              action={`${api.defaults.baseURL}/api/admin/upload`}
-              listType="picture-card"
-              fileList={fileList}
-              onChange={handleUploadChange}
-              multiple
-              headers={{
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              }}
+        <Form form={form} layout="vertical" className="space-y-0">
+          {/* 基本信息 */}
+          <div className="mb-5">
+            <div className="grid grid-cols-2 gap-x-5">
+              <Form.Item
+                name="name"
+                label={<span className="text-sm text-gray-600">名称</span>}
+                rules={[{ required: true, message: "请输入产品名称" }]}
+                className="mb-0"
+              >
+                <Input placeholder="请输入产品名称" className="rounded-md" />
+              </Form.Item>
+              <Form.Item
+                name="categoryId"
+                label={<span className="text-sm text-gray-600">分类</span>}
+                rules={[{ required: true, message: "请选择产品分类" }]}
+                className="mb-0"
+              >
+                <CategoryDropdown />
+              </Form.Item>
+            </div>
+          </div>
+
+          {/* 内容描述 */}
+          <div className="mb-5">
+            <Form.Item
+              name="summary"
+              label={<span className="text-sm text-gray-600">简介</span>}
+              className="mb-3"
             >
-              <div>
-                <UploadOutlined />
-                <div className="mt-1">上传图片</div>
-              </div>
-            </Upload>
-          </Form.Item>
-          <Form.Item name="sort" label="排序">
-            <InputNumber min={0} className="w-full" />
-          </Form.Item>
-          <Form.Item
-            name="published"
-            label="发布状态"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
+              <Input.TextArea rows={2} placeholder="请输入产品简介" className="rounded-md" />
+            </Form.Item>
+            <Form.Item
+              name="description"
+              label={<span className="text-sm text-gray-600">详细描述</span>}
+              className="mb-0"
+            >
+              <Input.TextArea rows={4} placeholder="请输入产品详细描述" className="rounded-md" />
+            </Form.Item>
+          </div>
+
+          {/* 详细内容 */}
+          <div className="mb-5">
+            <Form.Item
+              label={<span className="text-sm text-gray-600">产品说明书</span>}
+              required
+              className="mb-0"
+            >
+              <RichTextEditor
+                key={editorKey}
+                content={editorContent}
+                onChange={setEditorContent}
+              />
+            </Form.Item>
+          </div>
+
+          {/* 媒体与设置 */}
+          <div className="mb-2">
+            <Form.Item label={<span className="text-sm text-gray-600">图片</span>} className="mb-4">
+              <Upload
+                action={`${api.defaults.baseURL}/api/admin/upload`}
+                listType="picture-card"
+                fileList={fileList}
+                onChange={handleUploadChange}
+                multiple
+                headers={{
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+                }}
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <UploadOutlined className="text-lg text-gray-400" />
+                  <div className="text-xs text-gray-400">上传图片</div>
+                </div>
+              </Upload>
+            </Form.Item>
+            <div className="grid grid-cols-2 gap-x-5">
+              <Form.Item
+                name="sort"
+                label={<span className="text-sm text-gray-600">排序</span>}
+                className="mb-0"
+              >
+                <InputNumber min={0} className="w-full rounded-md" />
+              </Form.Item>
+              <Form.Item
+                name="published"
+                label={<span className="text-sm text-gray-600">发布状态</span>}
+                valuePropName="checked"
+                className="mb-0"
+              >
+                <div className="flex items-center h-9">
+                  <Switch />
+                </div>
+              </Form.Item>
+            </div>
+          </div>
         </Form>
       </Modal>
     </div>

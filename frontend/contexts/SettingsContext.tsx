@@ -8,29 +8,36 @@ interface Settings {
   contact_phone?: string;
   contact_email?: string;
   contact_address?: string;
+  icp_number?: string;
+  copyright_text?: string;
 }
 
 const SettingsContext = createContext<Settings>({ wechatQr: "" });
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [wechatQr, setWechatQr] = useState("");
+  const [settings, setSettings] = useState<Settings>({ wechatQr: "" });
 
   useEffect(() => {
     api.get("/api/settings")
       .then((res) => {
         const body = res.data;
-        // 新格式: { success: true, data: { wechat_qr: "..." } }
-        // 旧格式: { data: { wechat_qr: "..." } }
         const data = body?.data || body;
-        if (data?.wechat_qr) {
-          setWechatQr(data.wechat_qr);
+        if (data) {
+          setSettings({
+            wechatQr: data.wechat_qr || "",
+            contact_phone: data.contact_phone || "13210894158",
+            contact_email: data.contact_email || "1227134924@qq.com",
+            contact_address: data.contact_address || "山东省临沂市沂河新区朝阳街道综合保税区东方跨境电商产业园20楼2010-2室",
+            icp_number: data.icp_number || "",
+            copyright_text: data.copyright_text || "",
+          });
         }
       })
       .catch(() => {});
   }, []);
 
   return (
-    <SettingsContext.Provider value={{ wechatQr }}>
+    <SettingsContext.Provider value={settings}>
       {children}
     </SettingsContext.Provider>
   );

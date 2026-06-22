@@ -12,7 +12,7 @@ import {
   Space,
   Tag,
   Image,
-  message,
+  App,
   Popconfirm,
   Card,
   Breadcrumb,
@@ -34,6 +34,7 @@ interface Banner {
 
 export default function AdminBannersPage() {
   const router = useRouter();
+  const { message } = App.useApp();
   const [data, setData] = useState<Banner[]>([]);
   const [filteredData, setFilteredData] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(false);
@@ -269,12 +270,12 @@ export default function AdminBannersPage() {
         onOk={handleSubmit}
         onCancel={() => {
           setModalOpen(false);
+          form.resetFields();
           setFileList([]);
         }}
         confirmLoading={submitting}
         width={640}
         centered
-        destroyOnHidden
         okText="确定"
         cancelText="取消"
         okButtonProps={{ className: "bg-[#0070d5] hover:bg-[#005bb5] border-none shadow-sm" }}
