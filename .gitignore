@@ -67,6 +67,20 @@ chrome-linux64.zip
 
 # Screenshots
 analysis_screenshots/
+categories.png
+messages.png
+
+# Test/utility scripts
+screenshot.mjs
+compare-style.mjs
+playwright-compare.mjs
+
+# Root-level generated configs
+/package.json
+/package-lock.json
+
+# Uploaded certificate images (managed via admin panel)
+/frontend/public/certificates/
 
 # Generated deployment packages
 *.tar.gz
