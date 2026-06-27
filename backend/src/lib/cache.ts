@@ -41,8 +41,8 @@ export async function cacheSet(key: string, data: unknown, ttl = CACHE_TTL): Pro
   try {
     const client = await getCacheClient();
     await client.setEx(key, ttl, JSON.stringify(data));
-  } catch {
-    // 静默失败
+  } catch (err) {
+    console.error("Redis 缓存写入失败:", err);
   }
 }
 
@@ -54,8 +54,8 @@ export async function cacheDel(pattern: string): Promise<void> {
     if (keys.length > 0) {
       await client.del(keys);
     }
-  } catch {
-    // 静默失败
+  } catch (err) {
+    console.error("Redis 缓存删除失败:", err);
   }
 }
 

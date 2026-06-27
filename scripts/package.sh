@@ -28,7 +28,6 @@ INCLUDES=(
   backend/package.json
   backend/tsconfig.json
   backend/Dockerfile
-  backend/.env.example
   backend/prisma/schema.prisma
   "backend/prisma/seed.ts"
   backend/src

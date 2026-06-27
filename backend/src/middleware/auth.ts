@@ -14,11 +14,7 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required");
-}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export function authenticateToken(
   req: Request,
@@ -32,6 +28,11 @@ export function authenticateToken(
 
   if (!token) {
     fail(res, "未提供认证令牌", 401);
+    return;
+  }
+
+  if (!JWT_SECRET) {
+    fail(res, "服务器配置错误：JWT_SECRET 未设置", 500);
     return;
   }
 

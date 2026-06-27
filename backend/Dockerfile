@@ -30,7 +30,7 @@ COPY --from=builder /app/prisma ./prisma
 
 COPY package.json ./
 
-RUN npm prune --omit=dev && npm install tsx && npx prisma generate
+RUN npm prune --omit=dev && npx prisma generate
 
 EXPOSE 3001
 

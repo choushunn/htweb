@@ -5,17 +5,31 @@ import api from "@/lib/api";
 
 interface Settings {
   wechatQr: string;
-  contact_phone?: string;
-  contact_email?: string;
-  contact_address?: string;
-  icp_number?: string;
-  copyright_text?: string;
+  contact_phone: string;
+  contact_email: string;
+  contact_address: string;
+  icp_number: string;
+  copyright_text: string;
 }
 
-const SettingsContext = createContext<Settings>({ wechatQr: "" });
+const SettingsContext = createContext<Settings>({
+  wechatQr: "",
+  contact_phone: "",
+  contact_email: "",
+  contact_address: "",
+  icp_number: "",
+  copyright_text: "",
+});
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<Settings>({ wechatQr: "" });
+  const [settings, setSettings] = useState<Settings>({
+    wechatQr: "",
+    contact_phone: "",
+    contact_email: "",
+    contact_address: "",
+    icp_number: "",
+    copyright_text: "",
+  });
 
   useEffect(() => {
     api.get("/api/settings")

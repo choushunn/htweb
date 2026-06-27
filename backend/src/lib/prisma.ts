@@ -4,8 +4,4 @@ const prisma = new PrismaClient({
   log: process.env.NODE_ENV === "development" ? ["query", "warn", "error"] : ["warn", "error"],
 });
 
-process.on("SIGTERM", async () => {
-  await prisma.$disconnect();
-});
-
 export default prisma;

@@ -4,7 +4,6 @@ import prisma from "../../lib/prisma.js";
 import { authenticateToken } from "../../middleware/auth.js";
 import { upload } from "../../middleware/upload.js";
 import { success, fail } from "../../lib/response.js";
-import { indexDocument, removeDocument } from "../../lib/search.js";
 import { cacheDel } from "../../lib/cache.js";
 
 const router = Router();
@@ -97,20 +96,6 @@ router.post("/", upload.array("images", 10), async (req, res) => {
 
     const product = await prisma.product.create({ data: result.data as any });
 
-    // 索引到 MeiliSearch
-    if (product.isPublished) {
-      await indexDocument("products", {
-        id: product.id,
-        name: product.name,
-        description: product.description || "",
-        detail: product.detail || "",
-        categoryId: product.categoryId,
-        isPublished: product.isPublished,
-        sort: product.sort,
-        createdAt: product.createdAt.getTime(),
-      });
-    }
-
     // 清除缓存
     await cacheDel("products:*");
 
@@ -161,22 +146,6 @@ router.put("/:id", upload.array("images", 10), async (req, res) => {
       data: result.data as any,
     });
 
-    // 同步搜索索引
-    if (product.isPublished) {
-      await indexDocument("products", {
-        id: product.id,
-        name: product.name,
-        description: product.description || "",
-        detail: product.detail || "",
-        categoryId: product.categoryId,
-        isPublished: product.isPublished,
-        sort: product.sort,
-        createdAt: product.createdAt.getTime(),
-      });
-    } else {
-      await removeDocument("products", product.id);
-    }
-
     // 清除缓存
     await cacheDel("products:*");
 
@@ -204,8 +173,6 @@ router.delete("/:id", async (req, res) => {
 
     await prisma.product.delete({ where: { id } });
 
-    // 从搜索索引移除
-    await removeDocument("products", id);
     // 清除缓存
     await cacheDel("products:*");
 

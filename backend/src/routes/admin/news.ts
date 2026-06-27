@@ -3,7 +3,6 @@ import { z } from "zod";
 import prisma from "../../lib/prisma.js";
 import { authenticateToken } from "../../middleware/auth.js";
 import { success, fail } from "../../lib/response.js";
-import { indexDocument, removeDocument } from "../../lib/search.js";
 import { cacheDel } from "../../lib/cache.js";
 
 const router = Router();
@@ -78,18 +77,6 @@ router.post("/", async (req, res) => {
 
     const news = await prisma.news.create({ data: result.data });
 
-    // 索引到 MeiliSearch
-    if (news.isPublished) {
-      await indexDocument("news", {
-        id: news.id,
-        title: news.title,
-        summary: news.summary || "",
-        content: news.content || "",
-        isPublished: news.isPublished,
-        createdAt: news.createdAt.getTime(),
-      });
-    }
-
     // 清除缓存
     await cacheDel("news:*");
 
@@ -129,20 +116,6 @@ router.put("/:id", async (req, res) => {
       data: result.data,
     });
 
-    // 同步搜索索引
-    if (news.isPublished) {
-      await indexDocument("news", {
-        id: news.id,
-        title: news.title,
-        summary: news.summary || "",
-        content: news.content || "",
-        isPublished: news.isPublished,
-        createdAt: news.createdAt.getTime(),
-      });
-    } else {
-      await removeDocument("news", news.id);
-    }
-
     // 清除缓存
     await cacheDel("news:*");
 
@@ -170,8 +143,6 @@ router.delete("/:id", async (req, res) => {
 
     await prisma.news.delete({ where: { id } });
 
-    // 从搜索索引移除
-    await removeDocument("news", id);
     // 清除缓存
     await cacheDel("news:*");
 

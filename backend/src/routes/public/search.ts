@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { searchDocuments } from "../../lib/search.js";
+import { searchNews, searchProducts } from "../../lib/search.js";
 import { success, fail } from "../../lib/response.js";
 
 const router = Router();
 
-// GET /api/search - 全文搜索
+// GET /api/search - 全文搜索（MySQL LIKE）
 router.get("/", async (req, res) => {
   try {
     const q = (req.query.q as string || "").trim();
@@ -20,21 +20,11 @@ router.get("/", async (req, res) => {
     const results: Record<string, unknown> = {};
 
     if (type === "all" || type === "news") {
-      const news = await searchDocuments("news", q, {
-        limit: type === "all" ? 5 : limit,
-        offset: type === "all" ? 0 : offset,
-        filter: "isPublished = true",
-      });
-      results.news = news;
+      results.news = await searchNews(q, type === "all" ? 5 : limit, 0);
     }
 
     if (type === "all" || type === "products") {
-      const products = await searchDocuments("products", q, {
-        limit: type === "all" ? 5 : limit,
-        offset: type === "all" ? 0 : offset,
-        filter: "isPublished = true",
-      });
-      results.products = products;
+      results.products = await searchProducts(q, type === "all" ? 5 : limit, 0);
     }
 
     success(res, results);

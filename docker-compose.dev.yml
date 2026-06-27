@@ -6,9 +6,3 @@ services:
   redis:
     ports:
       - 6379:6379
-
-  meilisearch:
-    ports:
-      - 7700:7700
-    environment:
-      - MEILI_ENV=development

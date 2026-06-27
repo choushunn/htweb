@@ -3,6 +3,7 @@ dotenv.config();
 
 import express, { type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
 import path from "node:path";
@@ -14,7 +15,7 @@ initSentry();
 
 const app = express();
 
-// CORS - 支持逗号分隔的多个来源，开发环境允许所有来源
+// CORS - 支持逗号分隔的多个来源
 const allowedOrigins = process.env.CORS_ORIGIN || "http://localhost:3000,http://localhost:3002";
 const origins = allowedOrigins.split(",").map((s) => s.trim());
 app.use(
@@ -25,15 +26,28 @@ app.use(
           if (!origin || origins.includes(origin)) {
             callback(null, true);
           } else {
-            callback(null, true); // 开发阶段允许所有来源
+            callback(new Error("不允许的来源"));
           }
         },
     credentials: !origins.includes("*"),
   })
 );
 
-// JSON body parser
-app.use(express.json());
+// 安全头
+app.use(helmet());
+
+// 请求体大小限制
+app.use(express.json({ limit: "5mb" }));
+
+// 全局速率限制（60 秒内最多 100 请求）
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { success: false, error: "请求过于频繁，请稍后再试" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(globalLimiter);
 
 // Static files - uploads
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
@@ -102,9 +116,35 @@ app.use("/api/admin/dashboard", adminDashboardRouter);
 app.use("/api/admin/settings", adminSettingsRouter);
 app.use("/api/admin/search", adminSearchRouter);
 
-// Health check
-app.get("/api/health", (_req: Request, res: Response) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+// Health check（含依赖服务检测）
+app.get("/api/health", async (_req: Request, res: Response) => {
+  const checks: Record<string, string> = {};
+  let healthy = true;
+
+  try {
+    const { default: prisma } = await import("./lib/prisma.js");
+    await (prisma as unknown as import("@prisma/client").PrismaClient).$queryRaw`SELECT 1`;
+    checks.database = "ok";
+  } catch {
+    checks.database = "unavailable";
+    healthy = false;
+  }
+
+  try {
+    const { getCacheClient } = await import("./lib/cache.js");
+    const cache = await getCacheClient();
+    await cache.ping();
+    checks.redis = "ok";
+  } catch {
+    checks.redis = "unavailable";
+    healthy = false;
+  }
+
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? "ok" : "degraded",
+    timestamp: new Date().toISOString(),
+    checks,
+  });
 });
 
 // 404 handler - must be after all routes
