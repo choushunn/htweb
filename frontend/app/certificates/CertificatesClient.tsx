@@ -14,9 +14,11 @@ interface Certificate {
 export default function CertificatesClient({
   certificates,
   error,
+  isServerLoading = false,
 }: {
   certificates: Certificate[];
   error?: string | null;
+  isServerLoading?: boolean;
 }) {
   return (
     <>
@@ -47,19 +49,23 @@ export default function CertificatesClient({
           />
         </div>
 
-        {!error && certificates.length === 0 ? (
+        {isServerLoading && (
+          <div className="text-center py-16 text-gray-400 text-lg animate-pulse">加载中...</div>
+        )}
+
+        {!isServerLoading && !error && certificates.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-5xl mb-4 text-gray-300">&#127942;</div>
             <p className="text-lg mb-4">暂无资质证书</p>
             <Link href="/contact" className="text-brand hover:text-brand-hover underline text-base">联系我们了解资质详情 &rarr;</Link>
           </div>
-        ) : error || certificates.length === 0 ? (
+        ) : !isServerLoading && (error || certificates.length === 0) ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-5xl mb-4 text-gray-300">&#128196;</div>
-            <p className="text-lg mb-4">暂无数据</p>
+            <p className="text-lg mb-4">{error || "暂无数据"}</p>
             <Link href="/" className="text-brand hover:text-brand-hover underline text-base">返回首页 &rarr;</Link>
           </div>
-        ) : (
+        ) : !isServerLoading ? (
           <Row gutter={[24, 24]}>
             {certificates.map((cert) => (
               <Col xs={24} sm={12} md={8} lg={6} key={cert.id}>
@@ -81,7 +87,7 @@ export default function CertificatesClient({
               </Col>
             ))}
           </Row>
-        )}
+        ) : null}
       </div>
     </>
   );

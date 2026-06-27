@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Layout, Menu, Drawer } from "antd";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { SearchOutlined, MenuOutlined, CloseOutlined } from "@ant-design/icons";
+import api from "@/lib/api";
 
 const { Header: AntHeader } = Layout;
 
@@ -26,19 +27,112 @@ const menuItems = [
   { key: "/contact", label: "联系我们", className: "!font-semibold" },
 ];
 
+interface SearchResultItem {
+  id: number;
+  name?: string;
+  title?: string;
+  description?: string;
+  summary?: string;
+  [key: string]: unknown;
+}
+
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<{
+    products: SearchResultItem[];
+    news: SearchResultItem[];
+  } | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (searchOpen && inputRef.current) {
       inputRef.current.focus();
     }
   }, [searchOpen]);
+
+  // 实时搜索（带 debounce）
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults(null);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const res = await api.get("/api/search", {
+        params: { q: query.trim(), type: "all", limit: 5 },
+      });
+      const body = res.data;
+      if (body.success) {
+        setSearchResults({
+          products: body.data?.products?.hits || [],
+          news: body.data?.news?.hits || [],
+        });
+      } else {
+        setSearchResults(null);
+      }
+    } catch {
+      setSearchResults(null);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
+
+  // 输入时自动触发搜索（300ms debounce，至少2个字符，且不在输入法输入中）
+  useEffect(() => {
+    if (!searchOpen || isComposing) return;
+    
+    // 清除之前的 timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // 如果输入为空或少于2个字符，清空结果但保持下拉框打开（用户可能正在输入）
+    if (!searchVal.trim() || searchVal.trim().length < 2) {
+      setSearchResults(null);
+      // 不要关闭下拉框，保持打开状态让用户继续输入
+      return;
+    }
+
+    // 显示下拉框
+    setShowDropdown(true);
+    setSearchLoading(true);
+
+    // 300ms 后执行搜索
+    searchTimeoutRef.current = setTimeout(() => {
+      performSearch(searchVal);
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchVal, searchOpen, isComposing, performSearch]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -84,13 +178,12 @@ export default function Header() {
     setOpenKeys(getOpenKeys());
   }, [pathname]);
 
-  const handleSearch = () => {
-    const val = searchVal.trim();
-    if (val) {
-      router.push(`/products?keyword=${encodeURIComponent(val)}`);
-      setSearchOpen(false);
-      setSearchVal("");
-    }
+  const handleResultClick = (type: "products" | "news", id: number) => {
+    setShowDropdown(false);
+    setSearchOpen(false);
+    setSearchVal("");
+    setSearchResults(null);
+    router.push(`/${type}/${id}`);
   };
 
   const handleMobileNavClick = (key: string) => {
@@ -137,52 +230,174 @@ export default function Header() {
         />
 
         {/* 桌面端导航右侧占位 + 搜索 */}
-        <div className="hidden lg:flex items-center relative h-[68px] ml-auto">
-          <div
-            className={`flex items-center overflow-hidden transition-[width,opacity] duration-200 ease-in-out ${searchOpen ? 'w-[200px] opacity-100' : 'w-0 opacity-0'}`}
-          >
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder="搜索产品..."
-              value={searchVal}
-              onChange={(e) => setSearchVal(e.target.value)}
-              onBlur={() => {
-                if (!searchVal.trim()) {
-                  setSearchOpen(false);
-                  setSearchVal("");
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch();
-                if (e.key === "Escape") {
-                  setSearchOpen(false);
-                  setSearchVal("");
-                }
-              }}
-              autoComplete="off"
-              className="w-full h-9 border border-[#d9d9d9] rounded px-3 text-[15px] outline-none box-border"
-            />
-          </div>
+        <div className="hidden lg:flex items-center relative h-[68px] ml-auto" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => {
-              if (searchOpen) {
-                const val = searchVal.trim();
-                if (val) {
-                  router.push(`/products?keyword=${encodeURIComponent(val)}`);
-                  setSearchVal("");
-                }
-                setSearchOpen(false);
-              } else {
-                setSearchOpen(true);
-              }
+              setSearchOpen(true);
+              setShowDropdown(true);
             }}
-            className={`w-9 h-9 flex items-center justify-center cursor-pointer text-xl rounded transition-colors duration-200 shrink-0 border-none bg-transparent p-0 active:scale-95 ${searchOpen ? 'text-[#0070d5] ml-2' : 'text-[#666] ml-0'}`}
-            aria-label={searchOpen ? "搜索" : "展开搜索"}
+            className="w-9 h-9 flex items-center justify-center cursor-pointer text-xl rounded transition-colors duration-200 shrink-0 border-none bg-transparent p-0 active:scale-95 text-[#666] ml-0"
+            aria-label="打开搜索"
           >
             <SearchOutlined aria-hidden="true" />
           </button>
+
+          {/* 搜索结果模态框 */}
+          {showDropdown && searchOpen && (
+            <div 
+              className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-[15vh]"
+              onClick={() => {
+                setShowDropdown(false);
+                setSearchOpen(false);
+                setSearchVal("");
+                setSearchResults(null);
+              }}
+            >
+              <div 
+                className="w-full max-w-4xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-4 p-6 border-b border-gray-100">
+                  <div className="flex-1 relative">
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      placeholder="输入关键词搜索产品、新闻..."
+                      value={searchVal}
+                      onChange={(e) => setSearchVal(e.target.value)}
+                      onCompositionStart={() => setIsComposing(true)}
+                      onCompositionEnd={(e) => {
+                        setIsComposing(false);
+                        setSearchVal((e.target as HTMLInputElement).value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setShowDropdown(false);
+                          setSearchOpen(false);
+                          setSearchVal("");
+                          setSearchResults(null);
+                        }
+                      }}
+                      autoComplete="off"
+                      className="w-full h-12 border-2 border-[#0070d5] rounded-lg px-4 text-lg outline-none focus:ring-2 focus:ring-blue-200"
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      setSearchOpen(false);
+                      setSearchVal("");
+                      setSearchResults(null);
+                    }}
+                    className="w-12 h-12 flex items-center justify-center text-2xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <CloseOutlined />
+                  </button>
+                </div>
+
+                <div className="max-h-[60vh] overflow-y-auto p-6">
+                  {searchLoading ? (
+                    <div className="flex items-center justify-center py-16 text-gray-400">
+                      <span className="inline-block w-8 h-8 border-3 border-gray-300 border-t-[#0070d5] rounded-full animate-spin mr-3" />
+                      <span className="text-lg">搜索中...</span>
+                    </div>
+                  ) : searchResults ? (
+                    <div>
+                      {/* 产品结果 */}
+                      {searchResults.products.length > 0 && (
+                        <div className="mb-8">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <span className="text-[#0070d5]">产品</span>
+                            <span className="text-sm font-normal text-gray-400">({searchResults.products.length})</span>
+                          </h3>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {searchResults.products.map((item) => (
+                              <button
+                                key={`p-${item.id}`}
+                                type="button"
+                                onClick={() => handleResultClick("products", item.id)}
+                                className="text-left p-4 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all cursor-pointer border border-gray-100 hover:border-[#0070d5] hover:shadow-md"
+                              >
+                                <div className="text-base font-medium text-gray-800 mb-2 line-clamp-2">
+                                  {item.name}
+                                </div>
+                                {item.description && (
+                                  <div className="text-sm text-gray-400 line-clamp-2">
+                                    {item.description}
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 新闻结果 */}
+                      {searchResults.news.length > 0 && (
+                        <div className="mb-8">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <span className="text-[#0070d5]">新闻</span>
+                            <span className="text-sm font-normal text-gray-400">({searchResults.news.length})</span>
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {searchResults.news.map((item) => (
+                              <button
+                                key={`n-${item.id}`}
+                                type="button"
+                                onClick={() => handleResultClick("news", item.id)}
+                                className="text-left p-4 bg-gray-50 hover:bg-blue-50 rounded-lg transition-all cursor-pointer border border-gray-100 hover:border-[#0070d5] hover:shadow-md"
+                              >
+                                <div className="text-base font-medium text-gray-800 mb-2 line-clamp-2">
+                                  {item.title}
+                                </div>
+                                {item.summary && (
+                                  <div className="text-sm text-gray-400 line-clamp-2">
+                                    {item.summary}
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 无结果 */}
+                      {searchResults.products.length === 0 && searchResults.news.length === 0 && (
+                        <div className="text-center py-16 text-gray-400">
+                          <div className="text-6xl mb-4">🔍</div>
+                          <div className="text-xl mb-2">未找到相关结果</div>
+                          <div className="text-sm">请尝试其他关键词</div>
+                        </div>
+                      )}
+                    </div>
+                  ) : searchVal ? (
+                    <div className="text-center py-16 text-gray-400">
+                      <div className="text-xl">输入关键词开始搜索</div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-16 text-gray-400">
+                      <div className="text-xl mb-4">热门关键词</div>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {["加氢催化剂", "铝镍合金", "钯碳", "贵金属"].map((kw) => (
+                          <button
+                            key={kw}
+                            type="button"
+                            onClick={() => setSearchVal(kw)}
+                            className="px-4 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-full text-sm transition-colors cursor-pointer border-none"
+                          >
+                            {kw}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 移动端：搜索 + 汉堡菜单 */}

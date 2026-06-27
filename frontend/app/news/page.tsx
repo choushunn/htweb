@@ -18,17 +18,19 @@ interface NewsItem {
 export default async function NewsPage() {
   let news: NewsItem[] = [];
   let pagination = { page: 1, pageSize: 5, total: 0 };
+  let loading = true;
 
   try {
     const res = await serverFetch<NewsItem[]>("/api/news?page=1&pageSize=5");
     const data = res.data;
-    news = Array.isArray(data) ? data : [];
+    news = data && Array.isArray(data) ? data : [];
     if (res.pagination) {
       pagination = res.pagination;
     }
+    loading = false;
   } catch {
-    // 加载失败时展示空数据
+    loading = false;
   }
 
-  return <NewsPageClient news={news} pagination={pagination} />;
+  return <NewsPageClient news={news} pagination={pagination} isServerLoading={loading} />;
 }

@@ -2,6 +2,7 @@ import { Router } from "express";
 import prisma from "../../lib/prisma.js";
 import sanitizeHtml from "sanitize-html";
 import { success, fail } from "../../lib/response.js";
+import { withCache } from "../../lib/cache.js";
 
 const router = Router();
 
@@ -13,18 +14,22 @@ router.get("/", async (req, res) => {
     const skip = (page - 1) * pageSize;
 
     const where = { isPublished: true };
+    const cacheKey = `news:list:${page}:${pageSize}`;
 
-    const [data, total] = await Promise.all([
-      prisma.news.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: pageSize,
-      }),
-      prisma.news.count({ where }),
-    ]);
+    const result = await withCache(cacheKey, async () => {
+      const [data, total] = await Promise.all([
+        prisma.news.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: pageSize,
+        }),
+        prisma.news.count({ where }),
+      ]);
+      return { data, pagination: { page, pageSize, total } };
+    });
 
-    success(res, data, { page, pageSize, total });
+    success(res, result.data, result.pagination);
   } catch (error) {
     console.error("获取新闻列表失败:", error);
     fail(res, "获取新闻列表失败");

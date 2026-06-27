@@ -27,10 +27,12 @@ export default function ProductsPageClient({
   categories,
   products: initialProducts,
   pagination: initialPagination,
+  isServerLoading = false,
 }: {
   categories: Category[];
   products: Product[];
   pagination: PaginationInfo;
+  isServerLoading?: boolean;
 }) {
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -134,7 +136,7 @@ export default function ProductsPageClient({
           </div>
         )}
 
-        {products.length === 0 && !loading && !error ? (
+        {products.length === 0 && !loading && !error && !isServerLoading ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-5xl mb-4 text-gray-300">&#128230;</div>
             <p className="text-lg mb-4">暂无产品</p>
@@ -153,7 +155,7 @@ export default function ProductsPageClient({
               }
             />
           </div>
-        ) : loading && products.length === 0 ? (
+        ) : (loading || isServerLoading) && products.length === 0 ? (
           <div className="text-center py-16 text-gray-400 text-lg animate-pulse">加载中...</div>
         ) : (
           <Row gutter={[24, 24]}>

@@ -24,9 +24,11 @@ interface PaginationInfo {
 export default function NewsPageClient({
   news: initialNews,
   pagination: initialPagination,
+  isServerLoading = false,
 }: {
   news: NewsItem[];
   pagination: PaginationInfo;
+  isServerLoading?: boolean;
 }) {
   const [news, setNews] = useState<NewsItem[]>(initialNews);
   const [pagination, setPagination] = useState<PaginationInfo>(initialPagination);
@@ -83,7 +85,7 @@ export default function NewsPageClient({
           />
         </div>
 
-      {loading && (
+      {(loading || isServerLoading) && (
         <div className="flex flex-col gap-8">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex gap-8 bg-white rounded-2xl p-6 shadow-sm">
@@ -96,7 +98,7 @@ export default function NewsPageClient({
         </div>
       )}
 
-      {!loading && news.length === 0 && !error && (
+      {!(loading || isServerLoading) && news.length === 0 && !error && (
         <div className="text-center py-16 text-gray-400">
           <div className="text-5xl mb-4 text-gray-300">&#128240;</div>
           <p className="text-lg mb-4">暂无新闻</p>
@@ -119,7 +121,7 @@ export default function NewsPageClient({
         </div>
       )}
 
-      {!loading && news.length > 0 && (
+      {!(loading || isServerLoading) && news.length > 0 && (
         <>
           <div className="flex flex-col gap-8">
             {news.map((item) => (

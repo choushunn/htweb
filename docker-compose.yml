@@ -1,12 +1,10 @@
-version: "3.8"
-
 services:
   mysql:
     image: mysql:8.0
     container_name: haotian-mysql
     restart: unless-stopped
-    ports:
-      - "3306:3306"
+    expose:
+      - "3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: haotian_website
@@ -21,6 +19,42 @@ services:
       timeout: 20s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    container_name: haotian-redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    container_name: haotian-meilisearch
+    restart: unless-stopped
+    expose:
+      - "7700"
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-dev-master-key!!}
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_ENV=production
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -30,10 +64,19 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
     env_file:
       - .env
     environment:
       - PORT=3001
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - DATABASE_URL=mysql://root:root@mysql:3306/haotian_website
+      - REDIS_URL=redis://redis:6379
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-dev-master-key!!}
     volumes:
       - uploads_data:/app/uploads
     networks:
@@ -51,6 +94,8 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://nginx
+        - NEXT_PUBLIC_SENTRY_DSN=${SENTRY_DSN:-}
+        - NEXT_PUBLIC_AMAP_KEY=${AMAP_KEY:-}
     container_name: haotian-frontend
     restart: unless-stopped
     depends_on:
@@ -60,6 +105,7 @@ services:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
       - BACKEND_URL=http://backend:3001
+      - SENTRY_DSN=${SENTRY_DSN:-}
     networks:
       - app-network
     healthcheck:
@@ -89,4 +135,6 @@ networks:
 
 volumes:
   mysql_data:
+  redis_data:
+  meilisearch_data:
   uploads_data:

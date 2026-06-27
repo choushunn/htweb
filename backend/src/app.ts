@@ -7,6 +7,10 @@ import rateLimit from "express-rate-limit";
 
 import path from "node:path";
 import { fail } from "./lib/response.js";
+import { initSentry, setupSentryErrorHandler } from "./lib/sentry.js";
+
+// 初始化 Sentry（必须在其他中间件之前）
+initSentry();
 
 const app = express();
 
@@ -60,6 +64,7 @@ import publicCertificatesRouter from "./routes/public/certificates.js";
 import publicBannersRouter from "./routes/public/banners.js";
 import publicMessagesRouter from "./routes/public/messages.js";
 import publicSettingsRouter from "./routes/public/settings.js";
+import publicSearchRouter from "./routes/public/search.js";
 
 // Admin routes
 import authRouter from "./routes/auth.js";
@@ -72,6 +77,7 @@ import adminMessagesRouter from "./routes/admin/messages.js";
 import adminUploadRouter from "./routes/admin/upload.js";
 import adminDashboardRouter from "./routes/admin/dashboard.js";
 import adminSettingsRouter from "./routes/admin/settings.js";
+import adminSearchRouter from "./routes/admin/search.js";
 
 // Mount public routes
 app.use("/api/news", publicNewsRouter);
@@ -81,6 +87,7 @@ app.use("/api/certificates", publicCertificatesRouter);
 app.use("/api/banners", publicBannersRouter);
 app.use("/api/messages", messagePostLimiter, publicMessagesRouter);
 app.use("/api/settings", publicSettingsRouter);
+app.use("/api/search", publicSearchRouter);
 
 // Mount admin routes
 app.use("/api/auth", loginLimiter, authRouter);
@@ -93,6 +100,7 @@ app.use("/api/admin/messages", adminMessagesRouter);
 app.use("/api/admin/upload", adminUploadRouter);
 app.use("/api/admin/dashboard", adminDashboardRouter);
 app.use("/api/admin/settings", adminSettingsRouter);
+app.use("/api/admin/search", adminSearchRouter);
 
 // Health check
 app.get("/api/health", (_req: Request, res: Response) => {
@@ -103,6 +111,9 @@ app.get("/api/health", (_req: Request, res: Response) => {
 app.use((_req: Request, res: Response) => {
   fail(res, "请求的资源不存在", 404);
 });
+
+// Sentry 错误上报
+setupSentryErrorHandler(app);
 
 // Error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

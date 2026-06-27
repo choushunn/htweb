@@ -18,14 +18,17 @@ interface Certificate {
 export default async function CertificatesPage() {
   let certificates: Certificate[] = [];
   let error: string | null = null;
+  let loading = true;
 
   try {
     const res = await serverFetch<Certificate[]>("/api/certificates");
     const data = res.data;
-    certificates = Array.isArray(data) ? data : [];
+    certificates = data && Array.isArray(data) ? data : [];
+    loading = false;
   } catch {
     error = "数据加载失败，请稍后重试";
+    loading = false;
   }
 
-  return <CertificatesClient certificates={certificates} error={error} />;
+  return <CertificatesClient certificates={certificates} error={error} isServerLoading={loading} />;
 }

@@ -23,24 +23,23 @@ export default async function ProductsPage() {
   let categories: Category[] = [];
   let products: Product[] = [];
   let pagination = { page: 1, pageSize: 16, total: 0 };
+  let loading = true;
 
   try {
-    const [catRes, prodRes] = await Promise.allSettled([
+    const [catRes, prodRes] = await Promise.all([
       serverFetch<Category[]>("/api/categories"),
       serverFetch<Product[]>("/api/products?page=1&pageSize=16"),
     ]);
 
-    if (catRes.status === "fulfilled") {
-      const data = catRes.value.data;
-      categories = Array.isArray(data) ? data : [];
-    }
-    if (prodRes.status === "fulfilled") {
-      const body = prodRes.value;
-      products = Array.isArray(body.data) ? body.data : [];
-      if (body.pagination) pagination = body.pagination;
-    }
+    categories = catRes.data && Array.isArray(catRes.data) ? catRes.data : [];
+    
+    const body = prodRes;
+    products = body.data && Array.isArray(body.data) ? body.data : [];
+    if (body.pagination) pagination = body.pagination;
+    
+    loading = false;
   } catch {
-    // 加载失败时展示空数据
+    loading = false;
   }
 
   return (
@@ -48,6 +47,7 @@ export default async function ProductsPage() {
       categories={categories}
       products={products}
       pagination={pagination}
+      isServerLoading={loading}
     />
   );
 }

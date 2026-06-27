@@ -1,6 +1,7 @@
 import { Router } from "express";
 import prisma from "../../lib/prisma.js";
 import { success, fail } from "../../lib/response.js";
+import { withCache } from "../../lib/cache.js";
 
 const router = Router();
 
@@ -17,18 +18,23 @@ router.get("/", async (req, res) => {
       where.categoryId = parseInt(categoryId as string, 10);
     }
 
-    const [data, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        orderBy: { sort: "asc" },
-        skip,
-        take: pageSize,
-        include: { category: true },
-      }),
-      prisma.product.count({ where }),
-    ]);
+    const cacheKey = `products:list:${page}:${pageSize}:${categoryId || "all"}`;
 
-    success(res, data, { page, pageSize, total });
+    const result = await withCache(cacheKey, async () => {
+      const [data, total] = await Promise.all([
+        prisma.product.findMany({
+          where,
+          orderBy: { sort: "asc" },
+          skip,
+          take: pageSize,
+          include: { category: true },
+        }),
+        prisma.product.count({ where }),
+      ]);
+      return { data, pagination: { page, pageSize, total } };
+    });
+
+    success(res, result.data, result.pagination);
   } catch (error) {
     console.error("获取产品列表失败:", error);
     fail(res, "获取产品列表失败");

@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { useSettings } from "@/contexts/SettingsContext";
 import api from "@/lib/api";
+import MapSection from "@/components/MapSection";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -224,6 +225,12 @@ export default function ContactPage() {
             </Card>
           </Col>
         </Row>
+
+        {/* 公司位置地图 */}
+        <div className="mt-12">
+          <Title level={4} className="mb-4">公司位置</Title>
+          <MapSection address={contact_address} className="w-full" style={{ minHeight: 350 }} />
+        </div>
       </div>
     </>
   );
